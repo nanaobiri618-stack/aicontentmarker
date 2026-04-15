@@ -1,7 +1,11 @@
 import OpenAI from 'openai';
 import { prisma } from '@/lib/db';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return openai;
+}
 
 function isOpenAiConfigured() {
   const key = process.env.OPENAI_API_KEY;
@@ -59,7 +63,7 @@ Generate ad copy for THREE platforms. Respond ONLY with valid JSON:
 }
 `;
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },

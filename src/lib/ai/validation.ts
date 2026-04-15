@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return openai;
+}
 
 export interface ValidationResult {
   isValid: boolean;
@@ -20,7 +22,7 @@ Content: "${content}"
 
 Output JSON: { "isValid": boolean, "issues": ["issue1", "issue2"] }`;
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },

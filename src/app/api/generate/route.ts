@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { executeAgentTask } from '@/lib/ai/agent';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { institutionId, contentSourceId, taskType = 'content_generation' } = await request.json();

@@ -3,9 +3,15 @@ import { prisma } from '../db';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 export interface GeneratedDraft {
   platform: 'instagram' | 'linkedin' | 'email';
@@ -67,7 +73,7 @@ export async function executeAgentTask(taskId: number): Promise<AgentResult> {
   });
 
   // STEP 3: DRAFTING - Generate multi-channel content
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: systemPrompt },

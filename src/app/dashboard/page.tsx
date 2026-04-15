@@ -45,6 +45,27 @@ export default function DashboardOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sendingAlert, setSendingAlert] = useState<number | null>(null);
+  const [alertResult, setAlertResult] = useState<{ id: number; success: boolean; message: string } | null>(null);
+
+  async function sendAlert(userId: number, userName: string) {
+    setSendingAlert(userId);
+    setAlertResult(null);
+    try {
+      const res = await fetch('/api/payments/send-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to send alert');
+      setAlertResult({ id: userId, success: true, message: `Alert sent to ${userName}` });
+    } catch (e: any) {
+      setAlertResult({ id: userId, success: false, message: e.message || 'Failed to send alert' });
+    } finally {
+      setSendingAlert(null);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -226,10 +247,20 @@ export default function DashboardOverview() {
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
                       {user.status === 'PAID' ? (
                         <span className="text-cyan-400 hover:text-cyan-300 cursor-pointer text-xs sm:text-sm">View Site</span>
-                      ) : (
-                        <span className="text-red-400 hover:text-red-300 cursor-pointer flex justify-end items-center gap-1 text-xs sm:text-sm">
-                          <PlayIcon className="w-3 h-3 sm:w-4 sm:h-4"/> Send Alert
+                      ) : sendingAlert === user.id ? (
+                        <span className="text-yellow-400 flex justify-end items-center gap-1 text-xs sm:text-sm">
+                          <svg className="animate-spin w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                          Sending…
                         </span>
+                      ) : alertResult?.id === user.id && alertResult.success ? (
+                        <span className="text-green-400 flex justify-end items-center gap-1 text-xs sm:text-sm">✓ Sent</span>
+                      ) : (
+                        <button
+                          onClick={() => sendAlert(user.id, user.name)}
+                          className="text-red-400 hover:text-red-300 cursor-pointer flex justify-end items-center gap-1 text-xs sm:text-sm"
+                        >
+                          <PlayIcon className="w-3 h-3 sm:w-4 sm:h-4"/> Send Alert
+                        </button>
                       )}
                     </td>
                   </tr>

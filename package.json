@@ -26,6 +26,7 @@
     "next": "^14.0.0",
     "next-auth": "^4.24.0",
     "node-cron": "^3.0.0",
+    "nodemailer": "^7.0.13",
     "openai": "^4.0.0",
     "paystack-sdk": "^1.0.0",
     "postcss": "^8.4.0",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^8.0.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0"
   }
