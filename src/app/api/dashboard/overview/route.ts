@@ -109,26 +109,56 @@ export async function GET() {
     // Get recent agent tasks/activity
     const recentTasks = user.institution?.agentTasks || [];
     
-    // Get all users for this institution for the payment table
-    const institutionUsers = await prisma.user.findMany({
-      where: { institutionId: user.institutionId },
-      include: {
-        orders: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+    // Check if god admin
+    const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+    const isGodAdmin = String(session.user.email).toLowerCase() === GOD_ADMIN_EMAIL;
+
+    // Get users for payment table - god admin sees all, normal owners see only their institution
+    let paymentUsersQuery;
+    if (isGodAdmin) {
+      // God admin sees all users with their institution
+      paymentUsersQuery = await prisma.user.findMany({
+        where: {
+          // Only users who have made at least one purchase
+          orders: { some: {} },
         },
-      },
-    });
+        include: {
+          institution: true,
+          orders: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+        take: 100,
+      });
+    } else {
+      // Normal owner only sees users from their institution who have made purchases
+      paymentUsersQuery = await prisma.user.findMany({
+        where: { 
+          institutionId: user.institutionId,
+          // Only users who have made at least one purchase
+          orders: { some: {} },
+        },
+        include: {
+          institution: true,
+          orders: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+        take: 100,
+      });
+    }
 
     // Map users to payment status format
-    const paymentStatuses = institutionUsers.map(u => {
+    const paymentStatuses = paymentUsersQuery.map(u => {
       const latestOrder = u.orders[0];
       const isPaid = latestOrder?.status === 'completed';
       return {
         id: u.id,
         name: u.name || `User ${u.id}`,
         email: u.email,
-        institution: user.institution?.name || null,
+        institution: u.institution?.name || null,
         status: isPaid ? 'PAID' : 'UNPAID',
         amount: latestOrder ? Number(latestOrder.totalPrice) : 0,
         lastAlert: latestOrder ? new Date(latestOrder.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : null,
