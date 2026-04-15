@@ -10,10 +10,34 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const orders = await prisma.order.findMany({
-    include: { product: { include: { institution: true } }, user: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const email = String(session.user.email ?? '').toLowerCase();
+  const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+  const isGodAdmin = email === GOD_ADMIN_EMAIL;
+
+  let orders;
+  if (isGodAdmin) {
+    // God admin can see all orders
+    orders = await prisma.order.findMany({
+      include: { product: { include: { institution: true } }, user: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  } else {
+    // Normal owners only see orders from their institution
+    const currentUser = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!currentUser?.institutionId) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    orders = await prisma.order.findMany({
+      where: { product: { institutionId: currentUser.institutionId } },
+      include: { product: { include: { institution: true } }, user: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   return NextResponse.json(orders);
 }
 

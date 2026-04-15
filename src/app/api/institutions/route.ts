@@ -5,15 +5,38 @@ import { authOptions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/institutions — list all institutions for the current owner
+// GET /api/institutions — list institutions for the current owner (all if god admin)
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const institutions = await prisma.institution.findMany({
-    include: { socialHandles: true, products: true, generatedSite: true, brandGuides: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const email = String(session.user.email ?? '').toLowerCase();
+  const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+  const isGodAdmin = email === GOD_ADMIN_EMAIL;
+
+  let institutions;
+  if (isGodAdmin) {
+    // God admin can see all institutions
+    institutions = await prisma.institution.findMany({
+      include: { socialHandles: true, products: true, generatedSite: true, brandGuides: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  } else {
+    // Normal owners only see their own institutions
+    const currentUser = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!currentUser?.institutionId) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    institutions = await prisma.institution.findMany({
+      where: { id: currentUser.institutionId },
+      include: { socialHandles: true, products: true, generatedSite: true, brandGuides: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
   return NextResponse.json(institutions);
 }

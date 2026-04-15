@@ -1,14 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const email = String(session.user.email ?? '').toLowerCase();
+    const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+    const isGodAdmin = email === GOD_ADMIN_EMAIL;
+
     const { searchParams } = new URL(request.url);
     const institutionId = searchParams.get('institutionId');
-    const status = searchParams.get('status'); // pending, approved, published, etc.
+    const status = searchParams.get('status');
 
     if (!institutionId) {
       return NextResponse.json({ error: 'Institution ID required' }, { status: 400 });
+    }
+
+    // Validate user has access to the requested institution
+    if (!isGodAdmin) {
+      const currentUser = await prisma.user.findUnique({
+        where: { email: email },
+      });
+
+      if (!currentUser?.institutionId || currentUser.institutionId !== parseInt(institutionId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     const where: any = { institutionId: parseInt(institutionId) };

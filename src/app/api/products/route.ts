@@ -10,9 +10,50 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const email = String(session.user.email ?? '').toLowerCase();
+  const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+  const isGodAdmin = email === GOD_ADMIN_EMAIL;
+
   const institutionId = req.nextUrl.searchParams.get('institutionId');
+  
+  let whereClause;
+  if (institutionId) {
+    // If institutionId is specified, validate access
+    if (isGodAdmin) {
+      // God admin can view any institution
+      whereClause = { institutionId: parseInt(institutionId) };
+    } else {
+      // Normal users can only view their own institution
+      const currentUser = await prisma.user.findUnique({
+        where: { email: email },
+      });
+
+      if (!currentUser?.institutionId || currentUser.institutionId !== parseInt(institutionId)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      whereClause = { institutionId: currentUser.institutionId };
+    }
+  } else {
+    // No institutionId specified - only god admin can view all
+    if (!isGodAdmin) {
+      // Normal users can only view their own institution
+      const currentUser = await prisma.user.findUnique({
+        where: { email: email },
+      });
+
+      if (!currentUser?.institutionId) {
+        return NextResponse.json([], { status: 200 });
+      }
+
+      whereClause = { institutionId: currentUser.institutionId };
+    }
+    // God admin with no filter returns all products
+    whereClause = undefined;
+  }
+
   const products = await prisma.product.findMany({
-    where: institutionId ? { institutionId: parseInt(institutionId) } : undefined,
+    where: whereClause,
     orderBy: { createdAt: 'desc' },
   });
   return NextResponse.json(products);
