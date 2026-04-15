@@ -4,42 +4,95 @@ import { motion } from 'framer-motion';
 import { UserCircleIcon, CheckCircleIcon, PlayIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 
-type FinanceSummary = {
-  totalRevenue: number;
-  monthlyRevenue: number;
-  pendingSettlements: number;
-  totalOrders: number;
-  paidOrders: number;
-  unpaidOrders: number;
-  revenueGrowthPct: number;
+type DashboardData = {
+  user: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  institution?: {
+    name: string;
+    slug: string;
+  };
+  finance: {
+    totalRevenue: number;
+    monthlyRevenue: number;
+    pendingSettlements: number;
+    totalOrders: number;
+    paidOrders: number;
+    unpaidOrders: number;
+    revenueGrowthPct: number;
+  };
+  activityLog: Array<{
+    type: string;
+    message: string;
+    color: string;
+  }>;
+  paymentStatuses: Array<{
+    id: number;
+    name: string;
+    email: string;
+    institution: string;
+    status: string;
+    amount: number;
+    lastAlert: string;
+  }>;
+  agentCount: number;
+  systemLoad: number;
 };
 
 export default function DashboardOverview() {
-  const [finance, setFinance] = useState<FinanceSummary | null>(null);
-  const [financeError, setFinanceError] = useState<string | null>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      setFinanceError(null);
+      setError(null);
       try {
-        const res = await fetch('/api/agents/finance', { cache: 'no-store' });
+        const res = await fetch('/api/dashboard/overview', { cache: 'no-store' });
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || 'Failed to load finance summary');
-        setFinance(json);
+        if (!res.ok) throw new Error(json?.error || 'Failed to load dashboard data');
+        setData(json);
       } catch (e: any) {
-        setFinanceError(e.message || 'Failed to load finance summary');
+        setError(e.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
     }
     load();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 flex items-center justify-center min-h-[60vh]">
+        <div className="text-red-400 text-center">
+          <p className="text-xl font-semibold mb-2">Failed to load dashboard</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <header className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-1">Welcome Back, Annor!</h1>
-          <p className="text-sm text-slate-400">Owner/Admin roles</p>
+          <h1 className="text-3xl font-bold text-white mb-1">Welcome Back, {data?.user?.name || 'User'}!</h1>
+          <p className="text-sm text-slate-400">{data?.user?.role === 'owner' ? 'Owner' : data?.user?.role === 'admin' ? 'Administrator' : 'User'} Dashboard</p>
         </div>
         <div className="flex items-center gap-4 text-cyber-blue font-semibold tracking-widest uppercase text-sm">
           OWNER COMMAND CENTER
@@ -54,10 +107,10 @@ export default function DashboardOverview() {
         <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-md border border-cyan-500/30 p-6 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.1)]">
           <p className="text-xs text-cyan-400 mb-2">Total System Revenue (GHS)</p>
           <h3 className="text-3xl font-bold text-white mb-2">
-            {finance ? finance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+            {data?.finance ? data.finance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
           </h3>
-          <p className={`text-xs flex items-center gap-1 ${finance?.revenueGrowthPct && finance.revenueGrowthPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {finance ? `${finance.revenueGrowthPct >= 0 ? '▲' : '▼'} ${Math.abs(finance.revenueGrowthPct).toFixed(1)}%` : financeError ? 'Failed to load' : 'Loading…'}
+          <p className={`text-xs flex items-center gap-1 ${data?.finance?.revenueGrowthPct && data.finance.revenueGrowthPct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {data?.finance ? `${data.finance.revenueGrowthPct >= 0 ? '▲' : '▼'} ${Math.abs(data.finance.revenueGrowthPct).toFixed(1)}%` : 'Loading…'}
           </p>
         </div>
 
@@ -71,7 +124,7 @@ export default function DashboardOverview() {
                 <motion.div key={i} animate={{ height: h * 8 }} transition={{ repeat: Infinity, duration: 1, repeatType: "reverse" }} className="w-1 bg-purple-400 rounded-full" />
               ))}
             </div>
-            <h3 className="text-3xl font-bold text-white">12 <span className="text-xl text-slate-500">/ 12</span></h3>
+            <h3 className="text-3xl font-bold text-white">{data?.agentCount || 0} <span className="text-xl text-slate-500">/ 12</span></h3>
           </div>
           <p className="text-xs text-slate-400 mt-2">Fully Utilized</p>
         </div>
@@ -80,7 +133,7 @@ export default function DashboardOverview() {
         <div className="bg-gradient-to-br from-yellow-900/30 to-slate-900/80 backdrop-blur-md border border-yellow-500/30 p-6 rounded-2xl shadow-[0_0_15px_rgba(234,179,8,0.1)]">
           <p className="text-xs text-yellow-500 mb-2">Monthly Settlements (PENDING)</p>
           <h3 className="text-2xl font-bold text-white mb-2">
-            GHS {finance ? finance.pendingSettlements.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+            GHS {data?.finance ? data.finance.pendingSettlements.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
           </h3>
           <p className="text-xs text-yellow-600 bg-yellow-500/10 inline-block px-2 py-1 rounded">⏳ 2d 11h till EOFY notification</p>
         </div>
@@ -90,7 +143,7 @@ export default function DashboardOverview() {
           <p className="text-xs text-slate-400 mb-2 w-full text-left">System Load</p>
           <div className="relative w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent flex items-center justify-center animate-[spin_3s_linear_infinite]">
             <div className="absolute inset-0 flex items-center justify-center animate-[spin_3s_linear_infinite_reverse]">
-              <span className="text-sm font-bold text-white">68%</span>
+              <span className="text-sm font-bold text-white">{data?.systemLoad || 0}%</span>
             </div>
           </div>
         </div>
@@ -114,7 +167,7 @@ export default function DashboardOverview() {
              </div>
              <div className="flex flex-col items-center gap-2 z-10">
                 <div className="w-12 h-12 rounded-full border-2 border-blue-500 flex items-center justify-center bg-slate-900"><CheckCircleIcon className="w-6 h-6 text-blue-400"/></div>
-                <span className="text-xs text-slate-300 text-center">Institution:<br/>Golden Pharmacy</span>
+                <span className="text-xs text-slate-300 text-center">Institution:<br/>{data?.institution?.name || 'Not Set'}</span>
              </div>
           </div>
         </div>
@@ -123,9 +176,16 @@ export default function DashboardOverview() {
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex flex-col">
           <h3 className="text-sm font-semibold text-white mb-4">Task Queue & Agent Activity</h3>
           <div className="flex-1 space-y-3 overflow-y-auto font-mono text-xs">
-            <p className="text-green-400 bg-green-400/5 p-2 rounded border border-green-400/10">[System] Marketer Agent generated 14 new ads for &apos;Golden Pharmacy&apos;.</p>
-            <p className="text-cyan-400 bg-cyan-400/5 p-2 rounded border border-cyan-400/10">[AI] Analyzer Agent identified target audience: &apos;Chronic Care Patients&apos;.</p>
-            <p className="text-purple-400 bg-purple-400/5 p-2 rounded border border-purple-400/10">[Sales] Site Redirects activated.</p>
+            {data?.activityLog?.map((activity, idx) => (
+              <p key={idx} className={`text-${activity.color}-400 bg-${activity.color}-400/5 p-2 rounded border border-${activity.color}-400/10`}>
+                [{activity.type}] {activity.message}
+              </p>
+            )) || (
+              <>
+                <p className="text-green-400 bg-green-400/5 p-2 rounded border border-green-400/10">[System] Dashboard initialized and ready.</p>
+                <p className="text-cyan-400 bg-cyan-400/5 p-2 rounded border border-cyan-400/10">[AI] Waiting for content sources...</p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -146,20 +206,39 @@ export default function DashboardOverview() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5 text-slate-300">
-            <tr className="hover:bg-white/5">
-              <td className="px-6 py-4">Annor P.</td>
-              <td className="px-6 py-4">Golden Pharmacy</td>
-              <td className="px-6 py-4"><span className="px-2 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded text-xs">PAID</span></td>
-              <td className="px-6 py-4">14 Apr</td>
-              <td className="px-6 py-4 text-right text-cyan-400 hover:text-cyan-300 cursor-pointer">View Site</td>
-            </tr>
-            <tr className="hover:bg-white/5">
-              <td className="px-6 py-4">Ama K.</td>
-              <td className="px-6 py-4">Pharma-Link G.</td>
-              <td className="px-6 py-4"><span className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs">UNPAID (GHS 1,250)</span></td>
-              <td className="px-6 py-4">12 Apr</td>
-              <td className="px-6 py-4 text-right text-red-400 hover:text-red-300 cursor-pointer flex justify-end items-center gap-1"><PlayIcon className="w-4 h-4"/> Send Alert (Sound)</td>
-            </tr>
+            {data?.paymentStatuses?.length ? (
+              data.paymentStatuses.map((user) => (
+                <tr key={user.id} className="hover:bg-white/5">
+                  <td className="px-6 py-4">{user.name}</td>
+                  <td className="px-6 py-4">{user.institution}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 border rounded text-xs ${
+                      user.status === 'PAID' 
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                        : 'bg-red-500/20 text-red-400 border-red-500/30'
+                    }`}>
+                      {user.status === 'PAID' ? 'PAID' : `UNPAID (GHS ${user.amount.toLocaleString()})`}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">{user.lastAlert}</td>
+                  <td className="px-6 py-4 text-right">
+                    {user.status === 'PAID' ? (
+                      <span className="text-cyan-400 hover:text-cyan-300 cursor-pointer">View Site</span>
+                    ) : (
+                      <span className="text-red-400 hover:text-red-300 cursor-pointer flex justify-end items-center gap-1">
+                        <PlayIcon className="w-4 h-4"/> Send Alert (Sound)
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                  No users found. Add users to your institution to see them here.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
