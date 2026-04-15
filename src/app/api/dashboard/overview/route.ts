@@ -113,41 +113,62 @@ export async function GET() {
     const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
     const isGodAdmin = String(session.user.email).toLowerCase() === GOD_ADMIN_EMAIL;
 
-    // Get users for payment table - god admin sees all, normal owners see only their institution
+    // Get users for payment table - based on PURCHASES from institution
     let paymentUsersQuery;
     if (isGodAdmin) {
-      // God admin sees all users with their institution
+      // God admin sees all users who purchased from any institution
       paymentUsersQuery = await prisma.user.findMany({
         where: {
-          // Only users who have made at least one purchase
+          // Users who have orders with products from any institution
           orders: { some: {} },
         },
         include: {
           institution: true,
           orders: {
+            where: {
+              product: {},
+            },
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
         },
         take: 100,
       });
-    } else {
-      // Normal owner only sees users from their institution who have made purchases
-      paymentUsersQuery = await prisma.user.findMany({
+    } else if (user.institutionId) {
+      // Normal owner only sees users who purchased from THEIR institution
+      // Find all orders where product belongs to this institution
+      const institutionOrders = await prisma.order.findMany({
         where: { 
-          institutionId: user.institutionId,
-          // Only users who have made at least one purchase
-          orders: { some: {} },
-        },
-        include: {
-          institution: true,
-          orders: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
+          product: {
+            institutionId: user.institutionId,
           },
         },
+        include: {
+          user: {
+            include: {
+              institution: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
         take: 100,
       });
+
+      // Get unique users who made purchases
+      const uniqueUsers = new Map<number, any>();
+      institutionOrders.forEach((order: any) => {
+        if (!uniqueUsers.has(order.userId)) {
+          uniqueUsers.set(order.userId, {
+            ...order.user,
+            orders: [order],
+          });
+        }
+      });
+
+      paymentUsersQuery = Array.from(uniqueUsers.values());
+    } else {
+      // User has no institution, return empty
+      paymentUsersQuery = [];
     }
 
     // Map users to payment status format
