@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+
+// GET /api/institutions — list all institutions for the current owner
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const institutions = await prisma.institution.findMany({
+    include: { socialHandles: true, products: true, generatedSite: true, brandGuides: true },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return NextResponse.json(institutions);
+}
+
+// POST /api/institutions — create a new institution
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = await req.json();
+  const {
+    name, industry, description, website_url,
+    logoBase64, documents, colorPrimary, colorSecondary,
+    socialHandles, brandGuide,
+  } = body;
+
+  if (!name || !industry) {
+    return NextResponse.json({ error: 'Name and industry are required' }, { status: 400 });
+  }
+
+  const baseSlug = name.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
+  const slug = `${baseSlug}-${Date.now()}`;
+
+  const institution = await prisma.institution.create({
+    data: {
+      name,
+      slug,
+      industry,
+      description,
+      website_url,
+      logoBase64,
+      documents,
+      colorPrimary: colorPrimary ?? '#00D4FF',
+      colorSecondary: colorSecondary ?? '#B026FF',
+      socialHandles: socialHandles?.length
+        ? { create: socialHandles }
+        : undefined,
+      brandGuides: brandGuide
+        ? { create: { toneVoice: brandGuide.toneVoice, targetAudience: brandGuide.targetAudience, restrictedKeywords: brandGuide.restrictedKeywords ?? '[]', colorPalette: brandGuide.colorPalette } }
+        : undefined,
+    },
+    include: { socialHandles: true, brandGuides: true },
+  });
+
+  return NextResponse.json(institution, { status: 201 });
+}
