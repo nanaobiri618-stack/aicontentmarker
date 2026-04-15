@@ -42,13 +42,45 @@ export async function POST(req: NextRequest) {
     const amountDue = latestOrder ? Number(latestOrder.totalPrice) : 0;
     const institutionName = targetUser.institution?.name || 'N/A';
 
-    // Send the email
-    await sendPaymentAlertEmail({
-      to: targetUser.email,
-      name: targetUser.name || 'Customer',
-      institution: institutionName,
-      amount: amountDue,
-    });
+    // Check if email is configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn('SMTP not configured, logging alert but not sending email');
+      // Still log the alert even if email can't be sent
+      if (latestOrder) {
+        await prisma.order.update({
+          where: { id: latestOrder.id },
+          data: { updatedAt: new Date() },
+        });
+      }
+      return NextResponse.json({
+        success: true,
+        message: `Alert logged for ${targetUser.email} (email not configured)`,
+        warning: 'SMTP not configured - email not actually sent',
+      });
+    }
+
+    // Send the email with timeout
+    try {
+      await Promise.race([
+        sendPaymentAlertEmail({
+          to: targetUser.email,
+          name: targetUser.name || 'Customer',
+          institution: institutionName,
+          amount: amountDue,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email sending timeout')), 15000)
+        ),
+      ]);
+    } catch (emailError: any) {
+      console.error('Email sending failed:', emailError);
+      // Still return success if we logged the attempt
+      return NextResponse.json({
+        success: false,
+        error: `Email failed: ${emailError.message}`,
+        message: `Could not send email to ${targetUser.email}`,
+      }, { status: 502 });
+    }
 
     // Log the alert in the database (update the order's updatedAt as a record)
     if (latestOrder) {
