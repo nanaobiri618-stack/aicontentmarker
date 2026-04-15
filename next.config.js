@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  images: {
+    unoptimized: true,
+  },
   webpack: (config) => {
-    // Avoid Watchpack trying to stat protected Windows system files.
     config.watchOptions = config.watchOptions || {};
     const ignored = config.watchOptions.ignored || [];
     config.watchOptions.ignored = [
