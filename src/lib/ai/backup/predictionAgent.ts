@@ -7,15 +7,12 @@ function getOpenAI(): OpenAI {
   return openai;
 }
 
-// DISABLED: OpenAI API key expired - restore from backup/predictionAgent.ts when new key purchased
 function isOpenAiConfigured() {
-  // Temporarily disabled - restore from backup when ready
-  // const key = process.env.OPENAI_API_KEY;
-  // if (!key) return false;
-  // if (key.startsWith('sk-your-')) return false;
-  // if (key.includes('your-openai-api-key-here')) return false;
-  // return true;
-  return false; // DISABLED - API KEY EXPIRED
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return false;
+  if (key.startsWith('sk-your-')) return false;
+  if (key.includes('your-openai-api-key-here')) return false;
+  return true;
 }
 
 export interface PredictionResult {
