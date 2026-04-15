@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { prisma } from '../db';
+import { prisma } from '@/lib/db';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
 
