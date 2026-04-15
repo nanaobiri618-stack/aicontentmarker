@@ -1,16 +1,14 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
 
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-  return openai;
+const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+
+let genAI: GoogleGenerativeAI | null = null;
+function getGemini(): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  return genAI;
 }
 
 export interface GeneratedDraft {
@@ -72,63 +70,79 @@ export async function executeAgentTask(taskId: number): Promise<AgentResult> {
     data: { status: 'drafting' },
   });
 
-  // STEP 3: DRAFTING - Generate multi-channel content
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
-    ],
-    response_format: { type: 'json_object' },
-  });
+  // STEP 3: DRAFTING - Generate multi-channel content with Gemini
+  try {
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const prompt = `${systemPrompt}\n\n${userMessage}\n\nRespond ONLY with valid JSON in this exact format:\n{\n  "instagram": "full Instagram caption with emojis and hashtags",\n  "instagram_image": "description of suggested image",\n  "linkedin": "LinkedIn post text",\n  "email": "email subject and body"\n}\n\nImportant: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
+    
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+    
+    // Clean up the response - remove markdown code blocks if present
+    let cleanResponse = response;
+    if (response.includes('```json')) {
+      cleanResponse = response.split('```json')[1].split('```')[0].trim();
+    } else if (response.includes('```')) {
+      cleanResponse = response.split('```')[1].split('```')[0].trim();
+    }
+    
+    const rawOutput = JSON.parse(cleanResponse || '{}');
 
-  const rawOutput = JSON.parse(response.choices[0].message.content || '{}');
-
-  const drafts: GeneratedDraft[] = [
-    {
-      platform: 'instagram',
-      content_text: rawOutput.instagram || '',
-      image_suggestion: rawOutput.instagram_image || '',
-    },
-    {
-      platform: 'linkedin',
-      content_text: rawOutput.linkedin || '',
-    },
-    {
-      platform: 'email',
-      content_text: rawOutput.email || '',
-    },
-  ];
-
-  // STEP 4: VALIDATION - Editor Agent reviews each draft
-  const validationResults = [];
-  for (const draft of drafts) {
-    const result = await validateContent(draft.content_text, {
-      tone_voice: brandGuide.toneVoice,
-      restricted_keywords: JSON.parse(brandGuide.restrictedKeywords || '[]'),
-    });
-    validationResults.push({ platform: draft.platform, ...result });
-  }
-
-  // STEP 5: PERSIST - Save generated posts to database
-  for (const draft of drafts) {
-    await prisma.generatedPost.create({
-      data: {
-        institutionId: institution.id,
-        agentTaskId: task.id,
-        platform: draft.platform,
-        contentText: draft.content_text,
-        imageUrl: draft.image_suggestion,
-        status: 'pending',
+    const drafts: GeneratedDraft[] = [
+      {
+        platform: 'instagram',
+        content_text: rawOutput.instagram || '',
+        image_suggestion: rawOutput.instagram_image || '',
       },
+      {
+        platform: 'linkedin',
+        content_text: rawOutput.linkedin || '',
+      },
+      {
+        platform: 'email',
+        content_text: rawOutput.email || '',
+      },
+    ];
+
+    // STEP 4: VALIDATION - Editor Agent reviews each draft
+    const validationResults = [];
+    for (const draft of drafts) {
+      const result = await validateContent(draft.content_text, {
+        tone_voice: brandGuide.toneVoice,
+        restricted_keywords: JSON.parse(brandGuide.restrictedKeywords || '[]'),
+      });
+      validationResults.push({ platform: draft.platform, ...result });
+    }
+
+    // STEP 5: PERSIST - Save generated posts to database
+    for (const draft of drafts) {
+      await prisma.generatedPost.create({
+        data: {
+          institutionId: institution.id,
+          agentTaskId: task.id,
+          platform: draft.platform,
+          contentText: draft.content_text,
+          imageUrl: draft.image_suggestion,
+          status: 'pending',
+        },
+      });
+    }
+
+    // STEP 6: COMPLETE - Update task status
+    await prisma.agentTask.update({
+      where: { id: taskId },
+      data: { status: 'completed' },
     });
+
+    return { drafts, validationResults };
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    
+    await prisma.agentTask.update({
+      where: { id: taskId },
+      data: { status: 'failed' },
+    });
+    
+    throw new Error(`Content generation failed: ${error.message}`);
   }
-
-  // STEP 6: COMPLETE - Update task status
-  await prisma.agentTask.update({
-    where: { id: taskId },
-    data: { status: 'completed' },
-  });
-
-  return { drafts, validationResults };
 }

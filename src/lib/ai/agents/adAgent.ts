@@ -1,21 +1,16 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return openai;
+const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+
+let genAI: GoogleGenerativeAI | null = null;
+function getGemini(): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  return genAI;
 }
 
-// DISABLED: OpenAI API key expired - restoring from backup/ when new key purchased
-function isOpenAiConfigured() {
-  // Temporarily disabled - restore from backup/adAgent.ts when ready
-  // const key = process.env.OPENAI_API_KEY;
-  // if (!key) return false;
-  // if (key.startsWith('sk-your-')) return false;
-  // if (key.includes('your-openai-api-key-here')) return false;
-  // return true;
-  return false; // DISABLED - API KEY EXPIRED
+function isGeminiConfigured() {
+  return GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
 }
 
 export async function runAdAgent(institutionId: number): Promise<{ postsCreated: number }> {
@@ -34,7 +29,7 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
     data: { institutionId, taskType: 'ad_generation', status: 'drafting' },
   });
 
-  if (!isOpenAiConfigured()) {
+  if (!isGeminiConfigured()) {
     await prisma.agentTask.update({
       where: { id: task.id },
       data: { status: 'completed' },
@@ -49,8 +44,7 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
   const brandGuide = institution.brandGuides[0];
   const handles = institution.socialHandles.map((s) => `${s.platform}: @${s.handle}`).join(', ');
 
-  const prompt = `
-You are an expert social media marketer for ${institution.name}, a ${institution.industry} business in Ghana.
+  const prompt = `You are an expert social media marketer for ${institution.name}, a ${institution.industry} business in Ghana.
 Tone: ${brandGuide?.toneVoice ?? 'Professional'}
 Target audience: ${brandGuide?.targetAudience ?? 'General public'}
 Social handles: ${handles || 'None'}
@@ -58,43 +52,59 @@ Social handles: ${handles || 'None'}
 Products to promote:
 ${productList || 'No products listed yet.'}
 
-Generate ad copy for THREE platforms. Respond ONLY with valid JSON:
+Generate ad copy for THREE platforms. Respond ONLY with valid JSON in this exact format:
 {
   "instagram": "full Instagram caption with emojis and hashtags",
   "facebook": "Facebook post copy (2-3 paragraphs)",
   "twitter": "Tweet under 280 characters"
 }
-`;
 
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-  });
+Important: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
 
-  const ads = JSON.parse(response.choices[0].message.content || '{}');
-  const platforms = ['instagram', 'facebook', 'twitter'] as const;
-  let count = 0;
-
-  for (const platform of platforms) {
-    if (ads[platform]) {
-      await prisma.generatedPost.create({
-        data: {
-          institutionId,
-          agentTaskId: task.id,
-          platform,
-          contentText: ads[platform],
-          status: 'pending',
-        },
-      });
-      count++;
+  try {
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+    
+    // Clean up the response - remove markdown code blocks if present
+    let cleanResponse = response;
+    if (response.includes('```json')) {
+      cleanResponse = response.split('```json')[1].split('```')[0].trim();
+    } else if (response.includes('```')) {
+      cleanResponse = response.split('```')[1].split('```')[0].trim();
     }
+    
+    const ads = JSON.parse(cleanResponse || '{}');
+    const platforms = ['instagram', 'facebook', 'twitter'] as const;
+    let count = 0;
+
+    for (const platform of platforms) {
+      if (ads[platform]) {
+        await prisma.generatedPost.create({
+          data: {
+            institutionId,
+            agentTaskId: task.id,
+            platform,
+            contentText: ads[platform],
+            status: 'pending',
+          },
+        });
+        count++;
+      }
+    }
+
+    await prisma.agentTask.update({
+      where: { id: task.id },
+      data: { status: 'completed' },
+    });
+
+    return { postsCreated: count };
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    await prisma.agentTask.update({
+      where: { id: task.id },
+      data: { status: 'failed' },
+    });
+    return { postsCreated: 0 };
   }
-
-  await prisma.agentTask.update({
-    where: { id: task.id },
-    data: { status: 'completed' },
-  });
-
-  return { postsCreated: count };
 }

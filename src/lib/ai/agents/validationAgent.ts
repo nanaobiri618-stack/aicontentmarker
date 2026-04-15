@@ -1,21 +1,16 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return openai;
+const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+
+let genAI: GoogleGenerativeAI | null = null;
+function getGemini(): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  return genAI;
 }
 
-// DISABLED: OpenAI API key expired - restore from backup/validationAgent.ts when new key purchased
-function isOpenAiConfigured() {
-  // Temporarily disabled - restore from backup when ready
-  // const key = process.env.OPENAI_API_KEY;
-  // if (!key) return false;
-  // if (key.startsWith('sk-your-')) return false;
-  // if (key.includes('your-openai-api-key-here')) return false;
-  // return true;
-  return false; // DISABLED - API KEY EXPIRED
+function isGeminiConfigured() {
+  return GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
 }
 
 export async function runValidationAgent(institutionId: number): Promise<{
@@ -44,9 +39,9 @@ export async function runValidationAgent(institutionId: number): Promise<{
     },
   });
 
-  if (!isOpenAiConfigured()) {
+  if (!isGeminiConfigured()) {
     const note =
-      'Validation skipped: OPENAI_API_KEY is not configured. Add a real key in .env to enable AI validation.';
+      'Validation skipped: Gemini API key is not configured. Add a valid key to enable AI validation.';
 
     await prisma.institution.update({
       where: { id: institutionId },
@@ -64,8 +59,7 @@ export async function runValidationAgent(institutionId: number): Promise<{
     return { approved: false, note };
   }
 
-  const prompt = `
-You are a business compliance validation AI.
+  const prompt = `You are a business compliance validation AI.
 Review the following institution details and determine if it appears to be a legitimate business.
 
 Institution Name: ${institution.name}
@@ -77,31 +71,58 @@ Documents uploaded: ${institution.documents ? 'Yes' : 'No'}
 
 Respond ONLY with valid JSON in this exact format:
 { "approved": true | false, "note": "short explanation" }
-`;
 
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-  });
+Important: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
 
-  const result = JSON.parse(response.choices[0].message.content || '{}') as {
-    approved: boolean;
-    note: string;
-  };
+  try {
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const genResult = await model.generateContent(prompt);
+    const responseText = genResult.response.text();
+    
+    // Clean up the response - remove markdown code blocks if present
+    let cleanResponse = responseText;
+    if (responseText.includes('```json')) {
+      cleanResponse = responseText.split('```json')[1].split('```')[0].trim();
+    } else if (responseText.includes('```')) {
+      cleanResponse = responseText.split('```')[1].split('```')[0].trim();
+    }
+    
+    const result = JSON.parse(cleanResponse || '{}') as {
+      approved: boolean;
+      note: string;
+    };
 
-  await prisma.institution.update({
-    where: { id: institutionId },
-    data: {
-      verificationStatus: result.approved ? 'verified' : 'rejected',
-      verificationNote: result.note,
-    },
-  });
+    await prisma.institution.update({
+      where: { id: institutionId },
+      data: {
+        verificationStatus: result.approved ? 'verified' : 'rejected',
+        verificationNote: result.note,
+      },
+    });
 
-  await prisma.agentTask.updateMany({
-    where: { institutionId, taskType: 'validation', status: 'thinking' },
-    data: { status: 'completed' },
-  });
+    await prisma.agentTask.updateMany({
+      where: { institutionId, taskType: 'validation', status: 'thinking' },
+      data: { status: 'completed' },
+    });
 
-  return result;
+    return result;
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    const note = 'Validation failed: Gemini API error. Please try again later.';
+    
+    await prisma.institution.update({
+      where: { id: institutionId },
+      data: {
+        verificationStatus: 'pending',
+        verificationNote: note,
+      },
+    });
+
+    await prisma.agentTask.updateMany({
+      where: { institutionId, taskType: 'validation', status: 'thinking' },
+      data: { status: 'failed' },
+    });
+
+    return { approved: false, note };
+  }
 }

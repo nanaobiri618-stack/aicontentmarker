@@ -1,21 +1,16 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return openai;
+const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+
+let genAI: GoogleGenerativeAI | null = null;
+function getGemini(): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  return genAI;
 }
 
-// DISABLED: OpenAI API key expired - restore from backup/predictionAgent.ts when new key purchased
-function isOpenAiConfigured() {
-  // Temporarily disabled - restore from backup when ready
-  // const key = process.env.OPENAI_API_KEY;
-  // if (!key) return false;
-  // if (key.startsWith('sk-your-')) return false;
-  // if (key.includes('your-openai-api-key-here')) return false;
-  // return true;
-  return false; // DISABLED - API KEY EXPIRED
+function isGeminiConfigured() {
+  return GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
 }
 
 export interface PredictionResult {
@@ -46,13 +41,13 @@ export async function runPredictionAgent(institutionId: number): Promise<Predict
     data: { institutionId, taskType: 'prediction', status: 'thinking' },
   });
 
-  if (!isOpenAiConfigured()) {
+  if (!isGeminiConfigured()) {
     const fallback: PredictionResult = {
       trendingProducts: institution.products
         .slice(0, 5)
-        .map((p) => ({ productId: p.id, name: p.name, score: 50, reason: 'Fallback (no OpenAI key configured).' })),
-      audienceInsight: 'Prediction skipped: OPENAI_API_KEY is not configured.',
-      recommendedAction: 'Add a valid OPENAI_API_KEY in .env to enable predictions.',
+        .map((p) => ({ productId: p.id, name: p.name, score: 50, reason: 'Fallback (Gemini key not configured).' })),
+      audienceInsight: 'Prediction skipped: Gemini API key not configured.',
+      recommendedAction: 'Add a valid Gemini API key to enable predictions.',
     };
 
     await prisma.agentTask.update({
@@ -72,15 +67,14 @@ export async function runPredictionAgent(institutionId: number): Promise<Predict
     totalRevenue: p.orders.reduce((sum, o) => sum + Number(o.totalPrice), 0),
   }));
 
-  const prompt = `
-You are a customer behaviour prediction AI for ${institution.name}, a ${institution.industry} business.
+  const prompt = `You are a customer behaviour prediction AI for ${institution.name}, a ${institution.industry} business.
 Target audience: ${institution.brandGuides[0]?.targetAudience ?? 'General public'}
 
 Product performance data:
 ${JSON.stringify(productSummary, null, 2)}
 
 Based on this data, predict what customers will be most interested in next.
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON in this exact format:
 {
   "trendingProducts": [
     { "productId": <id>, "name": "<name>", "score": <0-100>, "reason": "<short reason>" }
@@ -88,20 +82,45 @@ Respond ONLY with valid JSON:
   "audienceInsight": "<one paragraph about the audience behaviour>",
   "recommendedAction": "<specific action for the Ad Agent or Website Agent>"
 }
-`;
 
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-  });
+Important: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
 
-  const result = JSON.parse(response.choices[0].message.content || '{}') as PredictionResult;
+  try {
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const genResult = await model.generateContent(prompt);
+    const responseText = genResult.response.text();
+    
+    // Clean up the response - remove markdown code blocks if present
+    let cleanResponse = responseText;
+    if (responseText.includes('```json')) {
+      cleanResponse = responseText.split('```json')[1].split('```')[0].trim();
+    } else if (responseText.includes('```')) {
+      cleanResponse = responseText.split('```')[1].split('```')[0].trim();
+    }
+    
+    const result = JSON.parse(cleanResponse || '{}') as PredictionResult;
 
-  await prisma.agentTask.update({
-    where: { id: task.id },
-    data: { status: 'completed' },
-  });
+    await prisma.agentTask.update({
+      where: { id: task.id },
+      data: { status: 'completed' },
+    });
 
-  return result;
+    return result;
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    const fallback: PredictionResult = {
+      trendingProducts: institution.products
+        .slice(0, 5)
+        .map((p) => ({ productId: p.id, name: p.name, score: 50, reason: 'API error fallback.' })),
+      audienceInsight: 'Prediction failed: Gemini API error.',
+      recommendedAction: 'Check API key and try again.',
+    };
+
+    await prisma.agentTask.update({
+      where: { id: task.id },
+      data: { status: 'failed' },
+    });
+
+    return fallback;
+  }
 }
