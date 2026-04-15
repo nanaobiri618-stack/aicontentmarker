@@ -63,6 +63,49 @@ export async function GET() {
     const paidOrders = orders.filter((o: { status: string }) => o.status === 'completed').length;
     const unpaidOrders = orders.filter((o: { status: string }) => o.status === 'pending').length;
 
+    // Calculate monthly revenue (current month)
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const monthlyRevenue = orders
+      .filter((o: { status: string; createdAt: Date }) => 
+        o.status === 'completed' && 
+        new Date(o.createdAt).getMonth() === currentMonth &&
+        new Date(o.createdAt).getFullYear() === currentYear
+      )
+      .reduce((sum: number, o: { totalPrice: any }) => sum + Number(o.totalPrice), 0);
+
+    // Calculate revenue growth (compare current month to previous month)
+    const prevMonthRevenue = orders
+      .filter((o: { status: string; createdAt: Date }) => {
+        const orderDate = new Date(o.createdAt);
+        const prevMonthDate = new Date(currentYear, currentMonth - 1);
+        return o.status === 'completed' && 
+          orderDate.getMonth() === prevMonthDate.getMonth() &&
+          orderDate.getFullYear() === prevMonthDate.getFullYear();
+      })
+      .reduce((sum: number, o: { totalPrice: any }) => sum + Number(o.totalPrice), 0);
+    
+    const revenueGrowthPct = prevMonthRevenue > 0 
+      ? ((monthlyRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 
+      : monthlyRevenue > 0 ? 100 : 0;
+
+    // Get agent task counts for system metrics
+    const allAgentTasks = user.institutionId 
+      ? await prisma.agentTask.findMany({
+          where: { institutionId: user.institutionId },
+        })
+      : [];
+    const activeAgentCount = allAgentTasks.filter((t: { status: string }) => 
+      t.status === 'thinking' || t.status === 'drafting' || t.status === 'validating'
+    ).length;
+    const totalAgentTasks = allAgentTasks.length;
+    
+    // Calculate system load based on active tasks vs total
+    const systemLoad = totalAgentTasks > 0 
+      ? Math.round((activeAgentCount / Math.max(totalAgentTasks, 1)) * 100)
+      : 0;
+
     // Get recent agent tasks/activity
     const recentTasks = user.institution?.agentTasks || [];
     
@@ -85,41 +128,35 @@ export async function GET() {
         id: u.id,
         name: u.name || `User ${u.id}`,
         email: u.email,
-        institution: user.institution?.name || 'N/A',
+        institution: user.institution?.name || null,
         status: isPaid ? 'PAID' : 'UNPAID',
         amount: latestOrder ? Number(latestOrder.totalPrice) : 0,
-        lastAlert: latestOrder ? new Date(latestOrder.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Never',
+        lastAlert: latestOrder ? new Date(latestOrder.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : null,
       };
     });
 
     // Generate activity log from real tasks
-    const activityLog = recentTasks.map(task => {
-      const posts = task.generatedPosts || [];
-      if (posts.length > 0) {
+    const activityLog = recentTasks
+      .map(task => {
+        const posts = task.generatedPosts || [];
+        if (posts.length > 0) {
+          return {
+            type: 'System',
+            message: `Marketer Agent generated ${posts.length} new ads for '${user.institution?.name || 'Institution'}'`,
+            color: 'green',
+          };
+        }
         return {
-          type: 'System',
-          message: `Marketer Agent generated ${posts.length} new ads for '${user.institution?.name || 'Institution'}'`,
-          color: 'green',
+          type: 'AI',
+          message: `${task.status === 'completed' ? 'Completed' : 'Processing'}: ${task.taskType} task #${task.id}`,
+          color: task.status === 'completed' ? 'green' : task.status === 'failed' ? 'red' : 'cyan',
         };
-      }
-      return {
-        type: 'AI',
-        message: `Analyzer Agent identified target audience for task ${task.id}`,
-        color: 'cyan',
-      };
-    });
-
-    // Add default activities if none exist
-    if (activityLog.length === 0) {
-      activityLog.push(
-        { type: 'System', message: `Site generated for '${user.institution?.name || 'Institution'}'`, color: 'purple' },
-        { type: 'AI', message: 'Analyzer Agent ready for content analysis', color: 'cyan' },
-      );
-    }
+      })
+      .slice(0, 5);
 
     return NextResponse.json({
       user: {
-        name: user.name || 'User',
+        name: user.name,
         email: user.email,
         role: user.role,
       },
@@ -129,17 +166,17 @@ export async function GET() {
       } : undefined,
       finance: {
         totalRevenue,
-        monthlyRevenue: totalRevenue * 0.3, // Approximation
+        monthlyRevenue,
         pendingSettlements,
         totalOrders: orders.length,
         paidOrders,
         unpaidOrders,
-        revenueGrowthPct: 12.5, // Placeholder until historical data
+        revenueGrowthPct,
       },
       activityLog,
       paymentStatuses,
-      agentCount: 12,
-      systemLoad: 68,
+      agentCount: totalAgentTasks,
+      systemLoad,
     });
   } catch (error) {
     console.error('Dashboard overview error:', error);

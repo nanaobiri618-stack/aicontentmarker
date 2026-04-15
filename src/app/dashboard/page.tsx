@@ -11,7 +11,7 @@ type DashboardData = {
     role: string;
   };
   institution?: {
-    name: string;
+    name: string | null;
     slug: string;
   };
   finance: {
@@ -32,10 +32,10 @@ type DashboardData = {
     id: number;
     name: string;
     email: string;
-    institution: string;
+    institution: string | null;
     status: string;
     amount: number;
-    lastAlert: string;
+    lastAlert: string | null;
   }>;
   agentCount: number;
   systemLoad: number;
@@ -146,9 +146,9 @@ export default function DashboardOverview() {
                 <motion.div key={i} animate={{ height: h * 6 }} transition={{ repeat: Infinity, duration: 1, repeatType: "reverse" }} className="w-0.5 sm:w-1 bg-purple-400 rounded-full" />
               ))}
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-white">{data?.agentCount || 0} <span className="text-lg sm:text-xl text-slate-500">/ 12</span></h3>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white">{data?.agentCount || 0}</h3>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Fully Utilized</p>
+          <p className="text-xs text-slate-400 mt-2">{data?.agentCount === 0 ? 'No active tasks' : 'Processing tasks'}</p>
         </div>
 
         {/* Pending Settlements */}
@@ -157,12 +157,16 @@ export default function DashboardOverview() {
           <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
             GHS {data?.finance ? data.finance.pendingSettlements.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
           </h3>
-          <p className="text-xs text-yellow-600 bg-yellow-500/10 inline-block px-2 py-1 rounded">⏳ 2d 11h till EOFY</p>
+          <p className="text-xs text-yellow-600 bg-yellow-500/10 inline-block px-2 py-1 rounded">
+            {(data?.finance?.unpaidOrders ?? 0) > 0 
+              ? `⏳ ${data!.finance.unpaidOrders} pending payment${data!.finance.unpaidOrders > 1 ? 's' : ''}` 
+              : '✓ All settled'}
+          </p>
         </div>
 
         {/* System Load */}
         <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-xl sm:rounded-2xl flex flex-row sm:flex-col items-center sm:justify-center gap-4 sm:gap-0">
-          <p className="text-xs text-slate-400 sm:mb-2 sm:w-full sm:text-left">System Load</p>
+          <p className="text-xs text-slate-400 sm:mb-2 sm:w-full sm:text-left">Task Load</p>
           <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-indigo-500 border-t-transparent flex items-center justify-center animate-[spin_3s_linear_infinite]">
             <div className="absolute inset-0 flex items-center justify-center animate-[spin_3s_linear_infinite_reverse]">
               <span className="text-xs sm:text-sm font-bold text-white">{data?.systemLoad || 0}%</span>
@@ -189,7 +193,7 @@ export default function DashboardOverview() {
              </div>
              <div className="flex flex-col items-center gap-2 z-10">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-blue-500 flex items-center justify-center bg-slate-900"><CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"/></div>
-                <span className="text-xs text-slate-300 text-center">Institution:<br/>{data?.institution?.name || 'Not Set'}</span>
+                <span className="text-xs text-slate-300 text-center">Institution:<br/>{data?.institution?.name || '—'}</span>
              </div>
           </div>
         </div>
@@ -198,15 +202,14 @@ export default function DashboardOverview() {
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col">
           <h3 className="text-sm font-semibold text-white mb-4">Task Queue & Agent Activity</h3>
           <div className="flex-1 space-y-3 overflow-y-auto font-mono text-xs max-h-48 sm:max-h-none">
-            {data?.activityLog?.map((activity, idx) => (
-              <p key={idx} className={`text-${activity.color}-400 bg-${activity.color}-400/5 p-2 rounded border border-${activity.color}-400/10`}>
-                [{activity.type}] {activity.message}
-              </p>
-            )) || (
-              <>
-                <p className="text-green-400 bg-green-400/5 p-2 rounded border border-green-400/10">[System] Dashboard initialized and ready.</p>
-                <p className="text-cyan-400 bg-cyan-400/5 p-2 rounded border border-cyan-400/10">[AI] Waiting for content sources...</p>
-              </>
+            {data?.activityLog?.length ? (
+              data.activityLog.map((activity, idx) => (
+                <p key={idx} className={`text-${activity.color}-400 bg-${activity.color}-400/5 p-2 rounded border border-${activity.color}-400/10`}>
+                  [{activity.type}] {activity.message}
+                </p>
+              ))
+            ) : (
+              <p className="text-slate-500 text-xs italic">No recent activity</p>
             )}
           </div>
         </div>
@@ -233,7 +236,7 @@ export default function DashboardOverview() {
                 data.paymentStatuses.map((user) => (
                   <tr key={user.id} className="hover:bg-white/5">
                     <td className="px-3 sm:px-6 py-3 sm:py-4">{user.name}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">{user.institution}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">{user.institution || '-'}</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <span className={`px-2 py-1 border rounded text-xs ${
                         user.status === 'PAID' 
@@ -243,7 +246,7 @@ export default function DashboardOverview() {
                         {user.status === 'PAID' ? 'PAID' : `UNPAID (GHS ${user.amount.toLocaleString()})`}
                       </span>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">{user.lastAlert}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">{user.lastAlert || '-'}</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
                       {user.status === 'PAID' ? (
                         <span className="text-cyan-400 hover:text-cyan-300 cursor-pointer text-xs sm:text-sm">View Site</span>
