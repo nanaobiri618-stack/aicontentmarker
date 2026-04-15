@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 
 const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
