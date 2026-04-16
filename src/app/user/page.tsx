@@ -18,7 +18,7 @@ type OrderRow = {
     institution: { name: string };
   };
   deliveryDetails?: {
-    customerName: string;
+    recipientName: string;
     phoneNumber: string;
     address: string;
     latitude: number | null;
@@ -330,6 +330,18 @@ export default function UserDashboardPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+                   {viewingReceipt.status !== 'completed' && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest">Payment Pending</p>
+                          <p className="text-[10px] text-slate-400">This receipt will be fully validated once payment is confirmed via Paystack.</p>
+                        </div>
+                      </div>
+                    )}
+
                    <div className="flex justify-between items-start">
                       <div>
                         <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Items Summary</p>
@@ -338,7 +350,7 @@ export default function UserDashboardPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Total Paid</p>
-                        <div className="text-xl font-black text-cyber-blue">GHS {viewingReceipt.totalPrice.toFixed(2)}</div>
+                        <div className="text-xl font-black text-cyber-blue">GHS {Number(viewingReceipt.totalPrice || 0).toFixed(2)}</div>
                       </div>
                    </div>
 
@@ -350,7 +362,7 @@ export default function UserDashboardPage() {
                         <div className="grid grid-cols-2 gap-4 bg-white/5 p-6 rounded-3xl border border-white/5">
                            <div>
                              <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Recipient</p>
-                             <p className="text-sm text-slate-200">{viewingReceipt.deliveryDetails.customerName}</p>
+                             <p className="text-sm text-slate-200">{viewingReceipt.deliveryDetails.recipientName}</p>
                            </div>
                            <div>
                              <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Phone</p>
