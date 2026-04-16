@@ -4,8 +4,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Removed serverExternalPackages as it's causing unrecognized key warnings 
-  // in this environment. Next.js 14+ generally handles @prisma/client automatically.
+  experimental: {
+    serverExternalPackages: ['@prisma/client'],
+  },
   webpack: (config) => {
     config.watchOptions = config.watchOptions || {};
     const ignored = config.watchOptions.ignored || [];
