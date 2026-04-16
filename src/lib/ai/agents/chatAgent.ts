@@ -14,10 +14,16 @@ function getGemini(): GoogleGenerativeAI {
 
 export async function runChatAgent(institutionId: number, userMessage: string, history: { role: 'user' | 'model'; parts: { text: string }[] }[] = []) {
   try {
+    // 1. Fetch Institution Data
     const institution = await prisma.institution.findUnique({
       where: { id: institutionId },
       include: {
         products: { where: { isVisible: true } },
+        complaints: { 
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          include: { user: true }
+        }
       },
     });
 
@@ -29,21 +35,30 @@ export async function runChatAgent(institutionId: number, userMessage: string, h
       .map((p) => `- ${p.name}: GHS ${Number(p.price).toFixed(2)}. ${p.description ?? ''}`)
       .join('\n');
 
-    const systemPrompt = `You are an AI Customer Support Agent for "${institution.name}".
-Business Description: ${institution.description || 'A verified business.'}
-Industry: ${institution.industry}
+    const complaintsContext = institution.complaints.length > 0 
+      ? institution.complaints.map(c => `- Q: ${c.subject} | A: ${c.status === 'resolved' ? 'This has been resolved previously.' : 'Currently working on this.'}`).join('\n')
+      : 'No common issues reported yet.';
 
-Available Products:
-${productsInfo || 'No products listed yet.'}
+    const systemPrompt = `You are an expert Live Support Agent for "${institution.name}". 
+    Your goal is to provide helpful, human-like assistance.
+    
+    Business Context: ${institution.description || 'Verified Business'}
+    Industry: ${institution.industry}
+    
+    Available Products:
+    ${productsInfo || 'No products listed.'}
+    
+    Common Issues/FAQs (Learned from history):
+    ${complaintsContext}
+    
+    Your instructions:
+    1. Be concise, warm, and helpful. Use a professional but friendly tone.
+    2. Answer product questions directly using the prices provided.
+    3. If you detect a recurring question from the history above, use that context to provide a more "insider" answer.
+    4. If the user is reporting a NEW problem, acknowledge it with empathy.
+    5. If a serious complaint is detected, add [INTENT:COMPLAINT] at the end of your response.`;
 
-Your goals:
-1. Answer questions about the products and the business politely.
-2. If the user has a problem or a complaint, acknowledge it, and inform them that you can log an official complaint for the "Main Admin" to review.
-3. If they want to log a complaint, encourage them to state "I want to log a complaint: [their message]".
-
-IMPORTANT: If you detect a serious complaint or the user explicitly asks to log one, your response MUST include the special tag [INTENT:COMPLAINT] at the end.`;
-
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
     const chat = model.startChat({
       history: history,
       generationConfig: {

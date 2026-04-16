@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
+import { parseAiJSON } from '../utils';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -69,19 +70,10 @@ Respond ONLY with valid JSON in this exact format:
 
 Important: Return ONLY the JSON array, no markdown, no backticks, no explanation.`;
 
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
     const result = await model.generateContent(prompt);
-    const response = result.response.text();
-
-    // Clean up response
-    let cleanResponse = response;
-    if (response.includes('```json')) {
-      cleanResponse = response.split('```json')[1].split('```')[0].trim();
-    } else if (response.includes('```')) {
-      cleanResponse = response.split('```')[1].split('```')[0].trim();
-    }
-
-    const recommendations: Recommendation[] = JSON.parse(cleanResponse || '[]');
+    const responseText = result.response.text();
+    const recommendations: Recommendation[] = parseAiJSON<any>(responseText);
     return recommendations;
   } catch (error) {
     console.error('Recommendation Agent Error:', error);

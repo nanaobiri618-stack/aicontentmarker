@@ -21,6 +21,16 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: {
+        ownedInstitutions: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            industry: true,
+            verificationStatus: true,
+            createdAt: true,
+          }
+        },
         institution: {
           include: {
             products: true,
@@ -216,6 +226,7 @@ export async function GET() {
         createdAt: c.createdAt || new Date(),
       })),
       unverifiedInstitutions,
+      ownedInstitutions: user.ownedInstitutions || [],
       agentCount: totalAgentTasks,
       systemLoad,
     });

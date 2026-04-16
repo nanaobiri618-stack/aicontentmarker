@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
+import { parseAiJSON } from '../utils';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -89,19 +90,10 @@ Respond ONLY with valid JSON in this exact format:
 Important: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
 
   try {
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
     const genResult = await model.generateContent(prompt);
     const responseText = genResult.response.text();
-    
-    // Clean up the response - remove markdown code blocks if present
-    let cleanResponse = responseText;
-    if (responseText.includes('```json')) {
-      cleanResponse = responseText.split('```json')[1].split('```')[0].trim();
-    } else if (responseText.includes('```')) {
-      cleanResponse = responseText.split('```')[1].split('```')[0].trim();
-    }
-    
-    const result = JSON.parse(cleanResponse || '{}') as PredictionResult;
+    const result = parseAiJSON<any>(responseText) as PredictionResult;
 
     await prisma.agentTask.update({
       where: { id: task.id },

@@ -27,12 +27,17 @@ export async function GET() {
       where: { email: email },
     });
 
-    if (!currentUser?.institutionId) {
-      return NextResponse.json([], { status: 200 });
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     institutions = await prisma.institution.findMany({
-      where: { id: currentUser.institutionId },
+      where: { 
+        OR: [
+          { ownerId: currentUser.id },
+          { id: currentUser.institutionId || -1 }
+        ]
+      },
       include: { socialHandles: true, products: true, generatedSite: true, brandGuides: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -59,6 +64,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Name and industry are required' }, { status: 400 });
   }
 
+  const currentUser = await prisma.user.findUnique({ where: { email } });
+  if (!currentUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
   const baseSlug = name.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
   const slug = `${baseSlug}-${Date.now()}`;
 
@@ -79,6 +87,7 @@ export async function POST(req: NextRequest) {
         brandGuides: brandGuide
           ? { create: { toneVoice: brandGuide.toneVoice, targetAudience: brandGuide.targetAudience, restrictedKeywords: brandGuide.restrictedKeywords ?? '[]', colorPalette: brandGuide.colorPalette } }
           : undefined,
+        ownerId: currentUser.id,
       },
       include: { socialHandles: true, brandGuides: true },
     });

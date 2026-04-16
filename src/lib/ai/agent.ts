@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
+import { parseAiJSON } from './utils';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
 
@@ -75,21 +76,10 @@ export async function executeAgentTask(taskId: number): Promise<AgentResult> {
 
   // STEP 3: DRAFTING - Generate multi-channel content with Gemini
   try {
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = `${systemPrompt}\n\n${userMessage}\n\nRespond ONLY with valid JSON in this exact format:\n{\n  "instagram": "full Instagram caption with emojis and hashtags",\n  "instagram_image": "description of suggested image",\n  "linkedin": "LinkedIn post text",\n  "email": "email subject and body"\n}\n\nImportant: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
-    
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
     const result = await model.generateContent(prompt);
-    const response = result.response.text();
-    
-    // Clean up the response - remove markdown code blocks if present
-    let cleanResponse = response;
-    if (response.includes('```json')) {
-      cleanResponse = response.split('```json')[1].split('```')[0].trim();
-    } else if (response.includes('```')) {
-      cleanResponse = response.split('```')[1].split('```')[0].trim();
-    }
-    
-    const rawOutput = JSON.parse(cleanResponse || '{}');
+    const responseText = result.response.text();
+    const rawOutput = parseAiJSON<any>(responseText);
 
     const drafts: GeneratedDraft[] = [
       {

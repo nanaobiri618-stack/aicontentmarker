@@ -23,6 +23,8 @@ model Institution {
   colorSecondary     String?         @default("#B026FF") @map("color_secondary")
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
+  ownerId            Int?            @map("owner_id")
+  owner              User?           @relation("InstitutionOwner", fields: [ownerId], references: [id])
   agentTasks         AgentTask[]
   brandGuides        BrandGuide[]
   contentSources     ContentSource[]
@@ -89,13 +91,14 @@ model User {
   name          String?
   image         String?
   passwordHash  String?      @map("password_hash")
-  institutionId Int?         @map("institution_id")
-  role          String       @default("owner")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  orders        Order[]
-  institution   Institution? @relation(fields: [institutionId], references: [id])
-  complaints    Complaint[]
+  institutionId      Int?            @map("institution_id")
+  role               String          @default("owner")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+  orders             Order[]
+  institution        Institution?    @relation(fields: [institutionId], references: [id])
+  ownedInstitutions  Institution[]   @relation("InstitutionOwner")
+  complaints         Complaint[]
 
   @@index([institutionId], map: "users_institution_id_fkey")
   @@map("users")

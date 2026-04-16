@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
+import { parseAiJSON } from '../utils';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -47,37 +48,36 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
   const brandGuide = institution.brandGuides[0];
   const handles = institution.socialHandles.map((s) => `${s.platform}: @${s.handle}`).join(', ');
 
-  const prompt = `You are an expert social media marketer for ${institution.name}, a ${institution.industry} business in Ghana.
-Tone: ${brandGuide?.toneVoice ?? 'Professional'}
-Target audience: ${brandGuide?.targetAudience ?? 'General public'}
-Social handles: ${handles || 'None'}
+  const prompt = `You are a Senior Social Media Strategist and Growth Hacker for ${institution.name}, a ${institution.industry} business based in Ghana.
+  
+  Persona Analysis:
+  Tone: ${brandGuide?.toneVoice ?? 'Professional and persuasive'}
+  Target Audience: ${brandGuide?.targetAudience ?? 'General public in Ghana'}
+  Social Handles: ${handles || 'None'}
+  
+  Product Catalog:
+  ${productList || 'No products listed yet.'}
+  
+  TASK:
+  1. Carefully analyze the products and the target audience.
+  2. Map out a "Hook, Story, Offer" structure for each post.
+  3. Generate high-impact ad copy for THREE platforms (Instagram, Facebook, Twitter/X).
+  4. Ensure the content is culturally relevant to the Ghanaian market where appropriate.
 
-Products to promote:
-${productList || 'No products listed yet.'}
-
-Generate ad copy for THREE platforms. Respond ONLY with valid JSON in this exact format:
-{
-  "instagram": "full Instagram caption with emojis and hashtags",
-  "facebook": "Facebook post copy (2-3 paragraphs)",
-  "twitter": "Tweet under 280 characters"
-}
-
-Important: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
+  Respond ONLY with valid JSON in this exact format:
+  {
+    "instagram": "Instagram caption with emojis and hashtags. Focus on visual storytelling.",
+    "facebook": "Facebook post copy. Focus on community engagement and clear call-to-action.",
+    "twitter": "X (Twitter) post under 280 characters. High-impact hook."
+  }
+  
+  Important: Return ONLY the raw JSON object. No backticks, no explanation.`;
 
   try {
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
     const result = await model.generateContent(prompt);
-    const response = result.response.text();
-    
-    // Clean up the response - remove markdown code blocks if present
-    let cleanResponse = response;
-    if (response.includes('```json')) {
-      cleanResponse = response.split('```json')[1].split('```')[0].trim();
-    } else if (response.includes('```')) {
-      cleanResponse = response.split('```')[1].split('```')[0].trim();
-    }
-    
-    const ads = JSON.parse(cleanResponse || '{}');
+    const responseText = result.response.text();
+    const ads = parseAiJSON<any>(responseText);
     const platforms = ['instagram', 'facebook', 'twitter'] as const;
     let count = 0;
 

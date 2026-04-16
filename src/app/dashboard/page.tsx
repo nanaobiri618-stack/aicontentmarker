@@ -64,6 +64,14 @@ type DashboardData = {
     industry: string;
     verificationStatus: string;
   }>;
+  ownedInstitutions?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    industry: string;
+    verificationStatus: string;
+    createdAt: string;
+  }>;
 };
 
 export default function DashboardOverview() {
@@ -312,6 +320,75 @@ export default function DashboardOverview() {
                             className="text-[10px] font-black text-red-400 hover:text-white transition-colors uppercase tracking-widest"
                           >
                             Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+            </section>
+          )}
+          
+          {/* Owner: My Institutions Management */}
+          {data?.user?.role === 'owner' && data.ownedInstitutions && data.ownedInstitutions.length > 0 && (
+            <section className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden">
+              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                    <UserCircleIcon className="w-6 h-6 text-cyber-blue" />
+                    Your Business Institutions
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">Manage your registered businesses</p>
+                </div>
+                <div className="px-4 py-1.5 rounded-full bg-cyber-blue/10 border border-cyber-blue/30 text-cyber-blue text-[10px] font-black">
+                  {data.ownedInstitutions.length} OWNED
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-[10px] text-slate-500 uppercase tracking-widest border-b border-white/5">
+                      <th className="px-8 py-4">Business Name</th>
+                      <th className="px-8 py-4">Industry</th>
+                      <th className="px-8 py-4">Status</th>
+                      <th className="px-8 py-4 text-right">Execution Controls</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {data.ownedInstitutions.map((inst) => (
+                      <tr key={inst.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-8 py-6">
+                          <p className="font-bold text-white group-hover:text-cyber-blue transition-colors">{inst.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono mt-0.5">{inst.slug}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="text-xs text-slate-400 capitalize">{inst.industry}</span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            inst.verificationStatus === 'verified' ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+                          }`}>
+                            {inst.verificationStatus.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right space-x-4">
+                          <a
+                            href={inst.slug ? `/store/${inst.slug}` : '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-black text-cyber-blue hover:text-white transition-colors uppercase tracking-widest"
+                          >
+                            View Store
+                          </a>
+                          <button
+                            onClick={() => alert('Switching active institution context... (logic to be implemented)')}
+                            className="text-[10px] font-black text-vivid-purple hover:text-white transition-colors uppercase tracking-widest"
+                          >
+                            Manage
                           </button>
                         </td>
                       </tr>
