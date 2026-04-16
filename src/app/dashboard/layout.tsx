@@ -16,6 +16,7 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { signOut } from 'next-auth/react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,9 +35,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="flex h-screen bg-[#020617] text-white overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white overflow-hidden transition-colors duration-300">
       {/* Desktop Sidebar — Glassmorphism */}
-      <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col items-start py-8 bg-white/5 border-r border-white/10 backdrop-blur-xl transition-all duration-300 z-50">
+      <aside className="hidden lg:flex w-64 flex-shrink-0 flex-col items-start py-8 bg-white/50 dark:bg-white/5 border-r border-slate-200 dark:border-white/10 backdrop-blur-xl transition-all duration-300 z-50">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 mb-12">
           <div className="p-2 bg-gradient-to-br from-cyber-blue to-vivid-purple rounded-xl flex-shrink-0">
@@ -59,8 +60,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-purple-500/20 to-transparent border-l-2 border-purple-500 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-gradient-to-r from-purple-500/10 dark:from-purple-500/20 to-transparent border-l-2 border-purple-500 text-purple-700 dark:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 hover:dark:text-white hover:bg-slate-100 hover:dark:bg-white/5'
                 }`}
               >
                 <Icon className="w-6 h-6 flex-shrink-0" />
@@ -70,11 +71,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Log Out */}
-        <div className="w-full px-4 mt-auto">
+        {/* Theme & Log Out */}
+        <div className="w-full px-4 mt-auto space-y-2">
+          <ThemeToggle fullWidth />
           <button
             onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-            className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all duration-200"
+            className="w-full flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:dark:text-red-400 hover:bg-red-50 hover:dark:bg-white/5 rounded-xl transition-all duration-200"
           >
             <ArrowLeftOnRectangleIcon className="w-6 h-6 flex-shrink-0" />
             <span className="font-medium">Log Out</span>
@@ -83,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Mobile Header with Hamburger */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-[#020617]/90 backdrop-blur-lg border-b border-white/10">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white/90 dark:bg-[#020617]/90 backdrop-blur-lg border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="p-1.5 bg-gradient-to-br from-cyber-blue to-vivid-purple rounded-lg">
             <SparklesIcon className="w-5 h-5 text-white" />
@@ -104,12 +106,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Sidebar Drawer */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-[#020617] border-r border-white/10 backdrop-blur-xl transform transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 dark:bg-[#020617] border-r border-slate-200 dark:border-white/10 backdrop-blur-xl transform transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Mobile Drawer Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-gradient-to-br from-cyber-blue to-vivid-purple rounded-lg">
               <SparklesIcon className="w-5 h-5 text-white" />
@@ -139,8 +141,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={closeMobileMenu}
                 className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-purple-500/20 to-transparent border-l-2 border-purple-500 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-gradient-to-r from-purple-500/10 dark:from-purple-500/20 to-transparent border-l-2 border-purple-500 text-purple-700 dark:text-white'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 hover:dark:text-white hover:bg-slate-100 hover:dark:bg-white/5'
                 }`}
               >
                 <Icon className="w-6 h-6 flex-shrink-0" />
@@ -150,14 +152,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Mobile Log Out */}
-        <div className="px-4 py-4 border-t border-white/10">
+        {/* Mobile Theme & Log Out */}
+        <div className="px-4 py-4 border-t border-slate-200 dark:border-white/10 space-y-2 mt-auto">
+          <ThemeToggle fullWidth />
           <button
             onClick={() => {
               closeMobileMenu();
               signOut({ callbackUrl: '/auth/signin' });
             }}
-            className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all duration-200"
+            className="w-full flex items-center gap-4 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:dark:text-red-400 hover:bg-red-50 hover:dark:bg-white/5 rounded-xl transition-all duration-200"
           >
             <ArrowLeftOnRectangleIcon className="w-6 h-6 flex-shrink-0" />
             <span className="font-medium">Log Out</span>

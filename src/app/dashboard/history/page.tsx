@@ -65,10 +65,10 @@ export default function HistoryPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <header className="mb-10 text-center lg:text-left">
-        <h1 className="text-3xl sm:text-4xl font-black text-white mb-2 tracking-tight uppercase italic">
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase italic">
           Activity Log
         </h1>
-        <p className="text-sm text-slate-400 flex items-center justify-center lg:justify-start gap-2 uppercase tracking-widest font-bold">
+        <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center lg:justify-start gap-2 uppercase tracking-widest font-bold">
           <span className="w-2 h-2 rounded-full bg-cyber-blue animate-pulse" />
           Full audit of content decisions and AI actions
         </p>
@@ -79,7 +79,7 @@ export default function HistoryPage() {
         {history.length > 0 ? (
           <>
             {/* Vertical line with gradient */}
-            <div className="absolute left-5 top-0 bottom-0 w-[2px] bg-gradient-to-b from-cyber-blue/50 via-white/10 to-transparent" />
+            <div className="absolute left-5 top-0 bottom-0 w-[2px] bg-gradient-to-b from-cyber-blue/50 via-slate-200 dark:via-white/10 to-transparent" />
 
             <div className="space-y-6">
               {history.map((item, i) => {
@@ -100,14 +100,14 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Card */}
-                    <div className="flex-1 bg-slate-900/50 border border-white/5 backdrop-blur-xl rounded-[1.5rem] px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 hover:border-white/10 hover:bg-white/5">
+                    <div className="flex-1 bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 backdrop-blur-xl rounded-[1.5rem] px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 hover:border-slate-300 hover:dark:border-white/10 hover:bg-slate-50 hover:dark:bg-white/5 shadow-sm dark:shadow-none">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.institution}</span>
-                          <span className="w-1 h-1 rounded-full bg-slate-700" />
+                          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                           <span className="text-[10px] font-black text-cyber-blue uppercase tracking-widest">Agent Task</span>
                         </div>
-                        <p className="text-sm font-bold text-white group-hover:text-cyber-blue transition-colors">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-cyber-blue transition-colors">
                           {item.label}
                         </p>
                       </div>
@@ -122,8 +122,8 @@ export default function HistoryPage() {
             </div>
           </>
         ) : (
-          <div className="text-center py-20 bg-white/5 border border-white/5 rounded-[2.5rem]">
-             <ClockIcon className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+          <div className="text-center py-20 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[2.5rem]">
+             <ClockIcon className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No activity found yet.</p>
           </div>
         )}

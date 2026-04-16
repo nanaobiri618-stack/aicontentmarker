@@ -16,10 +16,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-slate-900 text-white min-h-screen`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-h-screen transition-colors duration-300`}>
         <Providers>
-          <div className="backdrop-blur-sm bg-slate-900/80">
+          <div className="backdrop-blur-sm bg-white/50 dark:bg-slate-900/80 min-h-screen">
             {children}
           </div>
         </Providers>

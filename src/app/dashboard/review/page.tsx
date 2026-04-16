@@ -97,17 +97,17 @@ export default function ReviewQueuePage() {
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black text-white mb-2 tracking-tight uppercase italic flex items-center gap-3">
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight uppercase italic flex items-center gap-3">
             Review Queue
             <span className="text-cyber-blue text-sm not-italic font-mono bg-cyber-blue/10 px-2 py-0.5 rounded border border-cyber-blue/20">
               {items.length}
             </span>
           </h1>
-          <p className="text-sm text-slate-400 uppercase tracking-widest font-bold">
+          <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
             Audit and approve AI-generated broadcasts
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+        <div className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-full border border-slate-200 dark:border-white/5">
           <SparklesIcon className="w-4 h-4 text-cyber-blue" />
           AI Analysis Active
         </div>
@@ -122,28 +122,28 @@ export default function ReviewQueuePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -40 }}
-            className="group bg-slate-900/40 border border-white/5 backdrop-blur-xl rounded-[2.5rem] p-8 space-y-6 transition-all duration-300 hover:border-white/10 hover:bg-slate-900/60"
+            className="group bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 backdrop-blur-xl rounded-[2.5rem] p-8 space-y-6 transition-all duration-300 hover:border-slate-300 hover:dark:border-white/10 hover:bg-white hover:dark:bg-slate-900/60 shadow-sm dark:shadow-none"
           >
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className={`text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-widest ${
-                    platformColors[item.platform.toLowerCase()] ?? 'bg-white/10 text-slate-300 border-white/10'
+                    platformColors[item.platform.toLowerCase()] ?? 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 border-slate-200 dark:border-white/10'
                   }`}>
                     {item.platform}
                   </span>
-                  <h2 className="text-lg font-black text-white group-hover:text-cyber-blue transition-colors">
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-cyber-blue transition-colors">
                     {item.title}
                   </h2>
                 </div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                  <span className="text-slate-300">{item.institution}</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-700" />
+                  <span className="text-slate-700 dark:text-slate-300">{item.institution}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>{new Date(item.createdAt).toLocaleString('en-GB')}</span>
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 bg-black/30 p-4 rounded-3xl border border-white/5">
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-black/30 p-4 rounded-3xl border border-slate-200 dark:border-white/5">
                 <div className="text-center">
                    <div className="text-xl font-black text-cyber-blue font-mono">{item.aiScore}%</div>
                    <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">AI Confidence</div>
@@ -152,7 +152,7 @@ export default function ReviewQueuePage() {
             </div>
 
             <div className="relative">
-              <p className="text-sm text-slate-300 leading-relaxed bg-black/20 rounded-[1.5rem] p-6 border border-white/5 font-medium italic">
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-black/20 rounded-[1.5rem] p-6 border border-slate-200 dark:border-white/5 font-medium italic">
                 "{item.content}"
               </p>
             </div>
@@ -188,12 +188,12 @@ export default function ReviewQueuePage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-slate-900/40 border border-white/5 rounded-[3rem] p-20 text-center"
+          className="bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-[3rem] p-20 text-center shadow-sm dark:shadow-none"
         >
           <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
              <CheckCircleIcon className="w-8 h-8 text-green-500" />
           </div>
-          <p className="text-white font-black text-xl uppercase tracking-tight italic">Clear Signal</p>
+          <p className="text-slate-900 dark:text-white font-black text-xl uppercase tracking-tight italic">Clear Signal</p>
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">All generated content has been audited.</p>
         </motion.div>
       )}

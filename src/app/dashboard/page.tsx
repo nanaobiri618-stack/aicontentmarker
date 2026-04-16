@@ -184,7 +184,7 @@ export default function DashboardOverview() {
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-black text-white mb-2 tracking-tight">System Command</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">System Command</h1>
           <p className="text-sm text-slate-400 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             {data?.user?.role === 'owner' ? `Business Owner: ${data.institution?.name}` : 'Main Platform Administrator'}
@@ -213,13 +213,13 @@ export default function DashboardOverview() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-slate-900/50 border border-white/5 p-6 rounded-[2rem] backdrop-blur relative overflow-hidden group"
+            className="bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 p-6 rounded-[2rem] backdrop-blur relative overflow-hidden group shadow-sm dark:shadow-none"
           >
             <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity`}>
               <stat.icon className={`w-20 h-20 text-${stat.color}-400`} />
             </div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">{stat.label}</p>
-            <h3 className="text-2xl font-black text-white">{stat.value}</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white">{stat.value}</h3>
           </motion.div>
         ))}
       </div>
@@ -229,10 +229,10 @@ export default function DashboardOverview() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* Complaints Section */}
-          <section className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
+          <section className="bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-8 space-y-6 shadow-sm dark:shadow-none">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                   <ChatBubbleLeftRightIcon className="w-6 h-6 text-pink-500" />
                   Customer Support Inquiry Flow
                 </h2>
@@ -242,7 +242,7 @@ export default function DashboardOverview() {
 
             <div className="space-y-4">
               {data?.complaints.length ? data.complaints.map((c) => (
-                <div key={c.id} className="p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-pink-500/20 transition-all flex flex-col sm:flex-row gap-6">
+                <div key={c.id} className="p-6 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:border-pink-500/20 dark:hover:border-pink-500/20 transition-all flex flex-col sm:flex-row gap-6">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-pink-500/10 text-pink-500 border border-pink-500/20">
