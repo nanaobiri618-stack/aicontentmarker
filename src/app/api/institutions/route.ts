@@ -60,26 +60,32 @@ export async function POST(req: NextRequest) {
   const baseSlug = name.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
   const slug = `${baseSlug}-${Date.now()}`;
 
-  const institution = await prisma.institution.create({
-    data: {
-      name,
-      slug,
-      industry,
-      description,
-      website_url,
-      logoBase64,
-      documents,
-      colorPrimary: colorPrimary ?? '#00D4FF',
-      colorSecondary: colorSecondary ?? '#B026FF',
-      socialHandles: socialHandles?.length
-        ? { create: socialHandles }
-        : undefined,
-      brandGuides: brandGuide
-        ? { create: { toneVoice: brandGuide.toneVoice, targetAudience: brandGuide.targetAudience, restrictedKeywords: brandGuide.restrictedKeywords ?? '[]', colorPalette: brandGuide.colorPalette } }
-        : undefined,
-    },
-    include: { socialHandles: true, brandGuides: true },
-  });
+    const institution = await prisma.institution.create({
+      data: {
+        name,
+        slug,
+        industry,
+        description,
+        website_url,
+        logoBase64,
+        documents,
+        colorPrimary: colorPrimary ?? '#00D4FF',
+        colorSecondary: colorSecondary ?? '#B026FF',
+        socialHandles: socialHandles?.length
+          ? { create: socialHandles }
+          : undefined,
+        brandGuides: brandGuide
+          ? { create: { toneVoice: brandGuide.toneVoice, targetAudience: brandGuide.targetAudience, restrictedKeywords: brandGuide.restrictedKeywords ?? '[]', colorPalette: brandGuide.colorPalette } }
+          : undefined,
+      },
+      include: { socialHandles: true, brandGuides: true },
+    });
 
-  return NextResponse.json(institution, { status: 201 });
+    // CRITICAL: Link the current user to the new institution
+    await prisma.user.update({
+      where: { email: email.toLowerCase() },
+      data: { institutionId: institution.id }
+    });
+
+    return NextResponse.json(institution, { status: 201 });
 }

@@ -67,17 +67,30 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { institutionId, name, description, price, quantity, images } = body;
 
-  if (!institutionId || !name || price == null) {
-    return NextResponse.json({ error: 'institutionId, name and price are required' }, { status: 400 });
+  const targetId = parseInt(institutionId);
+  if (isNaN(targetId) || !name || price == null) {
+    return NextResponse.json({ error: 'Valid institutionId, name and price are required' }, { status: 400 });
+  }
+
+  // Authorization Check
+  const email = String(session.user.email ?? '').toLowerCase();
+  const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
+  const isGodAdmin = email === GOD_ADMIN_EMAIL;
+
+  if (!isGodAdmin) {
+    const currentUser = await prisma.user.findUnique({ where: { email } });
+    if (!currentUser?.institutionId || currentUser.institutionId !== targetId) {
+      return NextResponse.json({ error: 'Forbidden: You can only add products to your own institution.' }, { status: 403 });
+    }
   }
 
   const product = await prisma.product.create({
     data: {
-      institutionId: parseInt(institutionId),
+      institutionId: targetId,
       name,
       description,
-      price,
-      quantity: quantity ?? 0,
+      price: Number(price),
+      quantity: Number(quantity ?? 0),
       images: images ? JSON.stringify(images) : null,
     },
   });
