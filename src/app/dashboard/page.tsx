@@ -330,9 +330,6 @@ export default function DashboardOverview() {
             </section>
           )}
 
-            </section>
-          )}
-          
           {/* Owner: My Institutions Management */}
           {data?.user?.role === 'owner' && data.ownedInstitutions && data.ownedInstitutions.length > 0 && (
             <section className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden">
