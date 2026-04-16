@@ -95,8 +95,9 @@ Important: Return ONLY the JSON object, no markdown, no backticks, no explanatio
     await prisma.institution.update({
       where: { id: institutionId },
       data: {
-        verificationStatus: result.approved ? 'verified' : 'rejected',
-        verificationNote: result.note,
+        // If AI rejects, set to 'pending' for manual admin review instead of auto-rejecting
+        verificationStatus: result.approved ? 'verified' : 'pending',
+        verificationNote: result.approved ? result.note : `AI flagged for review: ${result.note}`,
       },
     });
 
@@ -108,7 +109,7 @@ Important: Return ONLY the JSON object, no markdown, no backticks, no explanatio
     return result;
   } catch (error: any) {
     console.error('Gemini API error:', error);
-    const note = 'Validation failed: Gemini API error. Please try again later.';
+    const note = 'AI validation failed — forwarded to admin for manual review. Error: ' + (error.message || 'Unknown error');
     
     await prisma.institution.update({
       where: { id: institutionId },

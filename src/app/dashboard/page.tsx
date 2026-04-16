@@ -116,6 +116,11 @@ export default function DashboardOverview() {
           <p className="text-xs sm:text-sm text-slate-400">{data?.user?.role === 'owner' ? 'Owner' : data?.user?.role === 'admin' ? 'Administrator' : 'User'} Dashboard</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 text-cyber-blue font-semibold tracking-widest uppercase text-xs sm:text-sm">
+          {(data?.user?.role === 'owner' || data?.user?.role === 'admin') && (
+            <a href="/dashboard/pending-institutions" className="px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-400 hover:bg-yellow-500/30 transition-colors">
+              Pending Review
+            </a>
+          )}
           <span className="hidden sm:inline">OWNER COMMAND CENTER</span>
           <span className="sm:hidden">COMMAND</span>
           <UserCircleIcon className="w-8 h-8 sm:w-10 sm:h-10 text-slate-400" />
