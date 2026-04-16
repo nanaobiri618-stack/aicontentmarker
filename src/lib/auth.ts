@@ -67,7 +67,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
+      console.log('[AUTH] signIn callback triggered', { 
+        provider: account?.provider, 
+        email: user?.email,
+        name: user?.name,
+      });
+
       if (account?.provider === 'google' && user.email) {
         try {
           const existing = await prisma.user.findUnique({
@@ -75,18 +81,21 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!existing) {
+            console.log('[AUTH] New Google user, creating database entry...', user.email);
             let role = 'user';
             try {
+              // cookies() can throw or be unavailable in some callback environments
               const cookieStore = cookies();
               const signupRole = cookieStore.get('signupRole')?.value;
+              console.log('[AUTH] signupRole cookie value:', signupRole);
               if (signupRole === 'owner' || signupRole === 'admin') {
                 role = signupRole;
               }
             } catch (e) {
-              console.error('Failed to read signupRole cookie', e);
+              console.warn('[AUTH] Failed to read signupRole cookie (expected in some environments)', e);
             }
 
-            await prisma.user.create({
+            const newUser = await prisma.user.create({
               data: {
                 email: user.email,
                 name: user.name ?? 'Google User',
@@ -94,39 +103,51 @@ export const authOptions: NextAuthOptions = {
                 role: role,
               },
             });
+            console.log('[AUTH] User created successfully:', newUser.id);
+          } else {
+            console.log('[AUTH] Existing user found in database:', existing.email);
           }
         } catch (e) {
-          console.error('Error in Google signIn callback', e);
+          console.error('[AUTH] Critical error in Google signIn callback:', e);
+          // Return false here to prevent login if we couldn't create/find user
           return false;
         }
       }
       return true;
     },
     jwt: async ({ token, user }: any) => {
+      // console.log('[AUTH] jwt callback token:', token.email);
+      
       // If logging in via credentials, seed token from returned user.
       if (user) {
+        console.log('[AUTH] Seeding token from user object:', user.email);
         token.role = (user as any).role ?? token.role ?? 'user';
         token.institutionSlug = (user as any).institutionSlug ?? null;
       }
 
       // Fix: Look up the user by email! Google OAuth IDs in token.sub will crash parseInt().
       if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-          include: { institution: true },
-        });
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            include: { institution: true },
+          });
 
-        if (dbUser) {
-          // Re-map token.sub to our database ID instead of the Google profile ID
-          token.sub = String(dbUser.id);
-          token.role = dbUser.role;
-          token.institutionSlug = dbUser.institution?.slug ?? null;
+          if (dbUser) {
+            // Re-map token.sub to our database ID instead of the Google profile ID
+            token.sub = String(dbUser.id);
+            token.role = dbUser.role;
+            token.institutionSlug = dbUser.institution?.slug ?? null;
+          }
+        } catch (e) {
+          console.error('[AUTH] Database lookup failed in JWT callback:', e);
         }
       }
 
       return token;
     },
     session: async ({ session, token }: any) => {
+      // console.log('[AUTH] session callback for:', session?.user?.email);
       if (session?.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
