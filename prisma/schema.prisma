@@ -31,6 +31,7 @@ model Institution {
   generatedSite      GeneratedSite?
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
+  complaints         Complaint[]
 
   @@map("institutions")
 }
@@ -88,6 +89,7 @@ model User {
   institution   Institution? @relation(fields: [institutionId], references: [id])
   role          String       @default("owner")
   orders        Order[]
+  complaints    Complaint[]
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
@@ -150,6 +152,7 @@ model Order {
   totalPrice  Decimal  @db.Decimal(10, 2) @map("total_price")
   status      String   @default("pending")
   paymentRef  String?  @map("payment_ref")
+  deliveryDetails DeliveryDetails?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -167,4 +170,35 @@ model GeneratedSite {
   updatedAt     DateTime    @updatedAt @map("updated_at")
 
   @@map("generated_sites")
+}
+model Complaint {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id])
+  institutionId Int         @map("institution_id")
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  subject       String
+  message       String      @db.Text
+  status        String      @default("pending") // pending, forwarded, resolved
+  forwarded     Boolean     @default(false)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@map("complaints")
+}
+
+model DeliveryDetails {
+  id           Int      @id @default(autoincrement())
+  orderId      Int      @unique @map("order_id")
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerName String   @map("customer_name")
+  phoneNumber  String   @map("phone_number")
+  address      String   @db.Text
+  latitude     Float?
+  longitude    Float?
+  status       String   @default("pending") // pending, delivered
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("delivery_details")
 }

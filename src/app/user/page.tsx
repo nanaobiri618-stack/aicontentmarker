@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type OrderRow = {
   id: number;
@@ -15,6 +16,14 @@ type OrderRow = {
     name: string;
     institution: { name: string };
   };
+  deliveryDetails?: {
+    customerName: string;
+    phoneNumber: string;
+    address: string;
+    latitude: number | null;
+    longitude: number | null;
+    status: string;
+  } | null;
 };
 
 type StoreCard = {
@@ -39,13 +48,13 @@ export default function UserDashboardPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewingReceipt, setViewingReceipt] = useState<OrderRow | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Parallel fetching
         const [ordersRes, storesRes, recsRes] = await Promise.all([
           fetch('/api/user/orders', { cache: 'no-store' }),
           fetch('/api/public/stores', { cache: 'no-store' }),
@@ -168,7 +177,7 @@ export default function UserDashboardPage() {
 
             {/* Orders Table */}
             <section className="space-y-6">
-              <h2 className="text-xl font-bold">Recent Orders</h2>
+              <h2 className="text-xl font-bold">Your Reference History</h2>
               <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -177,8 +186,8 @@ export default function UserDashboardPage() {
                         <th className="px-6 py-4">ID</th>
                         <th className="px-6 py-4">Product</th>
                         <th className="px-6 py-4">Institution</th>
-                        <th className="px-6 py-4">Price</th>
                         <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-right">Reference</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 text-slate-300">
@@ -192,13 +201,20 @@ export default function UserDashboardPage() {
                             <td className="px-6 py-4 font-mono text-xs text-slate-500">#{o.id}</td>
                             <td className="px-6 py-4 font-medium text-white">{o.product.name}</td>
                             <td className="px-6 py-4 text-xs text-slate-400">{o.product.institution.name}</td>
-                            <td className="px-6 py-4">GHS {Number(o.totalPrice).toFixed(2)}</td>
                             <td className="px-6 py-4">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                                 o.status === 'completed' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
                               }`}>
                                 {o.status.toUpperCase()}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={() => setViewingReceipt(o)}
+                                className="text-xs font-bold text-cyber-blue hover:text-white transition-colors underline underline-offset-4"
+                              >
+                                View Receipt
+                              </button>
                             </td>
                           </tr>
                         ))
@@ -263,7 +279,105 @@ export default function UserDashboardPage() {
           </aside>
         </div>
       </div>
+
+      {/* Receipt Modal */}
+      <AnimatePresence>
+        {viewingReceipt && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               onClick={() => setViewingReceipt(null)}
+               className="absolute inset-0 bg-black/90 backdrop-blur-sm" 
+             />
+             <motion.div 
+               initial={{ scale: 0.95, opacity: 0, y: 30 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               exit={{ scale: 0.95, opacity: 0, y: 30 }}
+               className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+             >
+                <div className="p-8 border-b border-white/10 flex justify-between items-center sticky top-0 bg-slate-900 z-10">
+                   <div>
+                     <h3 className="text-xl font-black uppercase tracking-tighter">Digital Receipt</h3>
+                     <p className="text-xs text-slate-500">Order Reference #{viewingReceipt.id}</p>
+                   </div>
+                   <button onClick={() => setViewingReceipt(null)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                   </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+                   <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Items Summary</p>
+                        <h4 className="text-lg font-bold text-white">{viewingReceipt.product.name}</h4>
+                        <p className="text-sm text-slate-400">{viewingReceipt.product.institution.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Total Paid</p>
+                        <div className="text-xl font-black text-cyber-blue">GHS {viewingReceipt.totalPrice.toFixed(2)}</div>
+                      </div>
+                   </div>
+
+                   <hr className="border-white/5" />
+
+                   <div className="space-y-4">
+                      <p className="text-[10px] text-slate-500 uppercase font-black">Delivery Logistics</p>
+                      {viewingReceipt.deliveryDetails ? (
+                        <div className="grid grid-cols-2 gap-4 bg-white/5 p-6 rounded-3xl border border-white/5">
+                           <div>
+                             <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Recipient</p>
+                             <p className="text-sm text-slate-200">{viewingReceipt.deliveryDetails.customerName}</p>
+                           </div>
+                           <div>
+                             <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Phone</p>
+                             <p className="text-sm text-slate-200">{viewingReceipt.deliveryDetails.phoneNumber}</p>
+                           </div>
+                           <div className="col-span-2">
+                             <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Address</p>
+                             <p className="text-sm text-slate-200">{viewingReceipt.deliveryDetails.address}</p>
+                           </div>
+                           <div className="col-span-2">
+                             <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Status</p>
+                             <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${viewingReceipt.deliveryDetails.status === 'delivered' ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+                                <span className="text-xs font-bold uppercase tracking-widest text-slate-300">
+                                  {viewingReceipt.deliveryDetails.status.toUpperCase()}
+                                </span>
+                             </div>
+                           </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-500 italic">No delivery information provided for this order.</p>
+                      )}
+                   </div>
+
+                   {viewingReceipt.deliveryDetails?.latitude && (
+                     <div className="space-y-4">
+                        <p className="text-[10px] text-slate-500 uppercase font-black">GPS Location</p>
+                        <div className="rounded-3xl border border-white/10 overflow-hidden aspect-video relative group">
+                           <iframe
+                             title="Receipt Map"
+                             width="100%"
+                             height="100%"
+                             frameBorder="0"
+                             style={{ border: 0 }}
+                             src={`https://www.google.com/maps/embed/v1/place?key=REPLACE_WITH_YOUR_KEY&q=${viewingReceipt.deliveryDetails.latitude},${viewingReceipt.deliveryDetails.longitude}&zoom=15`}
+                             allowFullScreen
+                           />
+                        </div>
+                     </div>
+                   )}
+                </div>
+
+                <div className="p-8 border-t border-white/10 bg-black/20 text-center">
+                   <p className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em]">Thank you for your purchase</p>
+                </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

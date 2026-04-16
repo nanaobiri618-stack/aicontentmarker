@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { productId, quantity } = body;
+  const { productId, quantity, delivery } = body;
 
   if (!productId) {
     return NextResponse.json({ error: 'productId is required' }, { status: 400 });
@@ -69,7 +69,20 @@ export async function POST(req: NextRequest) {
       quantity: qty,
       totalPrice,
       status: 'pending',
+      deliveryDetails: delivery ? {
+        create: {
+          customerName: delivery.name,
+          phoneNumber: delivery.phone,
+          address: delivery.address,
+          latitude: delivery.lat ? parseFloat(delivery.lat) : null,
+          longitude: delivery.lng ? parseFloat(delivery.lng) : null,
+          status: 'pending'
+        }
+      } : undefined
     },
+    include: {
+      deliveryDetails: true
+    }
   });
 
   // Decrement stock

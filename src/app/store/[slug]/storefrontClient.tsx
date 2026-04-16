@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import Chatbot from '@/components/storefront/Chatbot';
 
 type Institution = {
   id: number;
@@ -77,6 +78,8 @@ export default function StorefrontClient({
 
   return (
     <div className="min-h-screen bg-[#020617] text-white selection:bg-cyber-blue/30">
+      <Chatbot institutionId={institution.id} institutionName={institution.name} />
+      
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-5 py-8">
           <div
@@ -239,4 +242,3 @@ export default function StorefrontClient({
     </div>
   );
 }
-
