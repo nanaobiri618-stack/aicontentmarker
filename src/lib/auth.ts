@@ -1,5 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import type { NextAuthOptions } from 'next-auth';
@@ -12,6 +14,10 @@ export const authOptions: NextAuthOptions = {
   // We manage Users ourselves via `prisma.user`.
   session: { strategy: 'jwt' },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -61,6 +67,41 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' && user.email) {
+        try {
+          const existing = await prisma.user.findUnique({
+            where: { email: user.email },
+          });
+
+          if (!existing) {
+            let role = 'user';
+            try {
+              const cookieStore = cookies();
+              const signupRole = cookieStore.get('signupRole')?.value;
+              if (signupRole === 'owner' || signupRole === 'admin') {
+                role = signupRole;
+              }
+            } catch (e) {
+              console.error('Failed to read signupRole cookie', e);
+            }
+
+            await prisma.user.create({
+              data: {
+                email: user.email,
+                name: user.name ?? 'Google User',
+                image: user.image ?? null,
+                role: role,
+              },
+            });
+          }
+        } catch (e) {
+          console.error('Error in Google signIn callback', e);
+          return false;
+        }
+      }
+      return true;
+    },
     jwt: async ({ token, user }: any) => {
       // If logging in via credentials, seed token from returned user.
       if (user) {

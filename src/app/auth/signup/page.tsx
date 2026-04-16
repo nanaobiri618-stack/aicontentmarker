@@ -1,77 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
-type StoreOption = { slug: string; institutionName: string; industry: string };
-
 export default function SignupPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [role, setRole] = useState<'owner' | 'admin' | 'user'>('user');
-  const [storeSlug, setStoreSlug] = useState<string>('');
-
-  const [stores, setStores] = useState<StoreOption[]>([]);
-  const [loadingStores, setLoadingStores] = useState(false);
-
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadStores() {
-      setLoadingStores(true);
-      try {
-        const res = await fetch('/api/public/stores', { cache: 'no-store' });
-        const json = await res.json();
-        if (res.ok) setStores(json.stores ?? []);
-      } finally {
-        setLoadingStores(false);
-      }
-    }
-    loadStores();
-  }, []);
-
-  const canSubmit = useMemo(() => {
-    // Signup bug fix: Users no longer need to pick a store during registration
-    if (!email.trim() || password.length < 8) return false;
-    return true;
-  }, [email, password]);
-
-  async function submit() {
+  async function handleGoogleSignup() {
     setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          role,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to sign up');
-
-      // Auto-login after signup
-      const login = await signIn('credentials', {
-        email,
-        password,
-        redirect: true,
-        callbackUrl: role === 'user' ? '/user' : '/dashboard',
-      });
-
-      if ((login as any)?.error) {
-        throw new Error('Account created, but login failed. Please sign in.');
-      }
-    } catch (e: any) {
-      setError(e.message || 'Something went wrong');
-    } finally {
-      setBusy(false);
-    }
+    // Persist the requested role briefly so the NextAuth signin callback can read it 
+    document.cookie = `signupRole=${role}; path=/; max-age=3600`;
+    await signIn('google', { callbackUrl: role === 'user' ? '/user' : '/dashboard' });
   }
 
   return (
@@ -80,80 +21,48 @@ export default function SignupPage() {
         <h1 className="text-2xl font-bold text-white mb-1">Create account</h1>
         <p className="text-sm text-slate-300 mb-6">Sign up to access the platform.</p>
 
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="space-y-4">
+        <div className="space-y-6">
           <label className="block">
-            <span className="text-xs text-slate-300">Full name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-              placeholder="user name"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-xs text-slate-300">Email</span>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-              placeholder="user@example.com"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-xs text-slate-300">Password</span>
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-              placeholder="At least 8 characters"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-xs text-slate-300">Role</span>
+            <span className="text-xs text-slate-300">Select your role</span>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as any)}
-              className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
+              className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-3 text-white font-medium"
             >
               <option value="user">User (customer)</option>
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
+              <option value="owner">Business Owner</option>
+              <option value="admin">Platform Admin</option>
             </select>
           </label>
 
           {role === 'user' ? (
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs text-slate-300">
               As a customer, you can browse all available stores from your dashboard after signing up.
             </div>
           ) : (
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs text-slate-300">
               Owners/Admins can create institutions after signing in.
             </div>
           )}
 
           <button
-            onClick={submit}
-            disabled={busy || !canSubmit}
-            className="w-full bg-gradient-to-r from-cyber-blue to-vivid-purple hover:opacity-90 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+            onClick={handleGoogleSignup}
+            disabled={busy}
+            className="w-full bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-900 font-bold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
           >
-            {busy ? 'Creating…' : 'Sign up'}
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            {busy ? 'Connecting…' : 'Sign up with Google'}
           </button>
         </div>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
+        <div className="mt-8 text-center text-sm text-slate-400">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="text-slate-200 hover:text-white underline underline-offset-4">
+          <Link href="/auth/signin" className="text-slate-200 hover:text-white font-semibold underline underline-offset-4">
             Sign in
           </Link>
         </div>
