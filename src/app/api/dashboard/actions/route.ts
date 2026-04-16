@@ -88,6 +88,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(institution);
     }
 
+    if (type === 'review_post') {
+      const post = await prisma.generatedPost.update({
+        where: { id },
+        data: { status },
+      });
+      return NextResponse.json(post);
+    }
+
     return NextResponse.json({ error: 'Invalid update type' }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
