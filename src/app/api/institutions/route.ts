@@ -44,7 +44,9 @@ export async function GET() {
 // POST /api/institutions — create a new institution
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const email = String(session.user.email).toLowerCase();
 
   const body = await req.json();
   const {
