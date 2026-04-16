@@ -29,13 +29,11 @@ export async function POST(req: NextRequest) {
     }
 
     let institutionId: number | null = null;
-    if (role === 'user') {
-      if (!storeSlug) {
-        return NextResponse.json({ error: 'Store slug is required for users' }, { status: 400 });
-      }
+    if (role === 'user' && storeSlug) {
       const site = await prisma.generatedSite.findUnique({ where: { slug: storeSlug } });
-      if (!site) return NextResponse.json({ error: 'Storefront not found' }, { status: 404 });
-      institutionId = site.institutionId;
+      if (site) {
+        institutionId = site.institutionId;
+      }
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });

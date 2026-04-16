@@ -134,25 +134,9 @@ export default function SignupPage() {
           </label>
 
           {role === 'user' ? (
-            <label className="block">
-              <span className="text-xs text-slate-300">Choose storefront</span>
-              <select
-                value={storeSlug}
-                onChange={(e) => setStoreSlug(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-                disabled={loadingStores}
-              >
-                <option value="">{loadingStores ? 'Loading stores…' : 'Select a store'}</option>
-                {stores.map((s) => (
-                  <option key={s.slug} value={s.slug}>
-                    {s.institutionName} ({s.industry}) — /store/{s.slug}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-slate-400">
-                This links your customer account to the institution storefront.
-              </p>
-            </label>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
+              As a customer, you can browse all available stores from your dashboard after signing up.
+            </div>
           ) : (
             <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-300">
               Owners/Admins can create institutions after signing in.

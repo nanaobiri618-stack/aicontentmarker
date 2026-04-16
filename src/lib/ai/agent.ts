@@ -3,10 +3,13 @@ import { prisma } from '@/lib/db';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
 
-const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 let genAI: GoogleGenerativeAI | null = null;
 function getGemini(): GoogleGenerativeAI {
+  if (!GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not defined in environment variables');
+  }
   if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   return genAI;
 }

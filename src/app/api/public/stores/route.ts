@@ -15,6 +15,8 @@ export async function GET() {
       slug: s.slug,
       institutionName: s.institution.name,
       industry: s.institution.industry,
+      description: s.institution.description,
+      logo: s.institution.logoBase64,
     })),
   });
 }

@@ -1,16 +1,19 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 
-const GEMINI_API_KEY = 'AIzaSyDjHXyOV--SwLixgV9AdnsqtoAuEwNvJ0U';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 let genAI: GoogleGenerativeAI | null = null;
 function getGemini(): GoogleGenerativeAI {
+  if (!GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not defined in environment variables');
+  }
   if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   return genAI;
 }
 
 function isGeminiConfigured() {
-  return GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
+  return !!GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
 }
 
 export interface PredictionResult {
