@@ -14,23 +14,23 @@ model Institution {
   industry           String
   description        String?         @db.Text
   website_url        String?
-  logoBase64         String?         @db.LongText @map("logo_base64")
+  logoBase64         String?         @map("logo_base64") @db.LongText
   documents          String?         @db.LongText
   verificationStatus String          @default("pending") @map("verification_status")
-  verificationNote   String?         @db.Text @map("verification_note")
+  verificationNote   String?         @map("verification_note") @db.Text
   subscription_tier  String          @default("free")
   colorPrimary       String?         @default("#00D4FF") @map("color_primary")
   colorSecondary     String?         @default("#B026FF") @map("color_secondary")
-  users              User[]
-  brandGuides        BrandGuide[]
-  contentSources     ContentSource[]
-  agentTasks         AgentTask[]
-  generatedPosts     GeneratedPost[]
-  socialHandles      SocialHandle[]
-  products           Product[]
-  generatedSite      GeneratedSite?
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
+  agentTasks         AgentTask[]
+  brandGuides        BrandGuide[]
+  contentSources     ContentSource[]
+  generatedPosts     GeneratedPost[]
+  generatedSite      GeneratedSite?
+  products           Product[]
+  socialHandles      SocialHandle[]
+  users              User[]
   complaints         Complaint[]
 
   @@map("institutions")
@@ -39,43 +39,47 @@ model Institution {
 model BrandGuide {
   id                 Int         @id @default(autoincrement())
   institutionId      Int         @map("institution_id")
-  institution        Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   toneVoice          String      @map("tone_voice")
   targetAudience     String      @map("target_audience")
   restrictedKeywords String      @default("[]") @map("restricted_keywords")
   colorPalette       String?     @map("color_palette")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
+  institution        Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  @@index([institutionId], map: "brand_guides_institution_id_fkey")
   @@map("brand_guides")
 }
 
 model ContentSource {
   id            Int         @id @default(autoincrement())
   institutionId Int         @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   sourceType    String      @map("source_type")
   sourceUrl     String      @map("source_url")
   lastSynced    DateTime?   @map("last_synced")
-  agentTasks    AgentTask[]
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
+  agentTasks    AgentTask[]
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  @@index([institutionId], map: "content_sources_institution_id_fkey")
   @@map("content_sources")
 }
 
 model AgentTask {
   id              Int             @id @default(autoincrement())
   institutionId   Int             @map("institution_id")
-  institution     Institution     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   contentSourceId Int?            @map("content_source_id")
-  contentSource   ContentSource?  @relation(fields: [contentSourceId], references: [id], onDelete: SetNull)
   status          String          @default("queued")
   taskType        String          @map("task_type")
-  generatedPosts  GeneratedPost[]
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
+  contentSource   ContentSource?  @relation(fields: [contentSourceId], references: [id])
+  institution     Institution     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  generatedPosts  GeneratedPost[]
 
+  @@index([contentSourceId], map: "agent_tasks_content_source_id_fkey")
+  @@index([institutionId], map: "agent_tasks_institution_id_fkey")
   @@map("agent_tasks")
 }
 
@@ -86,22 +90,21 @@ model User {
   image         String?
   passwordHash  String?      @map("password_hash")
   institutionId Int?         @map("institution_id")
-  institution   Institution? @relation(fields: [institutionId], references: [id])
   role          String       @default("owner")
-  orders        Order[]
-  complaints    Complaint[]
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
+  orders        Order[]
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  complaints    Complaint[]
 
+  @@index([institutionId], map: "users_institution_id_fkey")
   @@map("users")
 }
 
 model GeneratedPost {
   id            Int         @id @default(autoincrement())
   institutionId Int         @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   agentTaskId   Int         @map("agent_task_id")
-  agentTask     AgentTask   @relation(fields: [agentTaskId], references: [id], onDelete: Cascade)
   platform      String
   contentText   String      @map("content_text")
   imageUrl      String?     @map("image_url")
@@ -109,96 +112,107 @@ model GeneratedPost {
   feedback      String?
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
+  agentTask     AgentTask   @relation(fields: [agentTaskId], references: [id], onDelete: Cascade)
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  @@index([agentTaskId], map: "generated_posts_agent_task_id_fkey")
+  @@index([institutionId], map: "generated_posts_institution_id_fkey")
   @@map("generated_posts")
 }
 
 model SocialHandle {
   id            Int         @id @default(autoincrement())
   institutionId Int         @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   platform      String
   handle        String
   profileUrl    String?     @map("profile_url")
   createdAt     DateTime    @default(now()) @map("created_at")
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  @@index([institutionId], map: "social_handles_institution_id_fkey")
   @@map("social_handles")
 }
 
 model Product {
   id            Int         @id @default(autoincrement())
   institutionId Int         @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   name          String
   description   String?     @db.Text
   price         Decimal     @db.Decimal(10, 2)
   quantity      Int         @default(0)
   images        String?     @db.LongText
   isVisible     Boolean     @default(true) @map("is_visible")
-  orders        Order[]
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
+  orders        Order[]
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
+  @@index([institutionId], map: "products_institution_id_fkey")
   @@map("products")
 }
 
 model Order {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id")
-  user        User     @relation(fields: [userId], references: [id])
-  productId   Int      @map("product_id")
-  product     Product  @relation(fields: [productId], references: [id])
-  quantity    Int      @default(1)
-  totalPrice  Decimal  @db.Decimal(10, 2) @map("total_price")
-  status      String   @default("pending")
-  paymentRef  String?  @map("payment_ref")
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  productId  Int      @map("product_id")
+  quantity   Int      @default(1)
+  totalPrice Decimal  @map("total_price") @db.Decimal(10, 2)
+  status     String   @default("pending")
+  paymentRef String?  @map("payment_ref")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  product         Product          @relation(fields: [productId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
   deliveryDetails DeliveryDetails?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([productId], map: "orders_product_id_fkey")
+  @@index([userId], map: "orders_user_id_fkey")
   @@map("orders")
+}
+
+model Complaint {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  institutionId Int         @map("institution_id")
+  subject       String
+  message       String      @db.Text
+  status        String      @default("pending")
+  forwarded     Boolean     @default(false)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([institutionId], map: "complaints_institution_id_fkey")
+  @@index([userId], map: "complaints_user_id_fkey")
+  @@map("complaints")
+}
+
+model DeliveryDetails {
+  id            Int      @id @default(autoincrement())
+  orderId       Int      @unique @map("order_id")
+  recipientName String   @map("recipient_name")
+  phoneNumber   String   @map("phone_number")
+  address       String   @db.Text
+  latitude      Float?
+  longitude     Float?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_details")
 }
 
 model GeneratedSite {
   id            Int         @id @default(autoincrement())
   institutionId Int         @unique @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   slug          String      @unique
   status        String      @default("draft")
-  themeData     String?     @db.LongText @map("theme_data")
+  themeData     String?     @map("theme_data") @db.LongText
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@map("generated_sites")
-}
-model Complaint {
-  id            Int         @id @default(autoincrement())
-  userId        Int         @map("user_id")
-  user          User        @relation(fields: [userId], references: [id])
-  institutionId Int         @map("institution_id")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  subject       String
-  message       String      @db.Text
-  status        String      @default("pending") // pending, forwarded, resolved
-  forwarded     Boolean     @default(false)
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-
-  @@map("complaints")
-}
-
-model DeliveryDetails {
-  id           Int      @id @default(autoincrement())
-  orderId      Int      @unique @map("order_id")
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  customerName String   @map("customer_name")
-  phoneNumber  String   @map("phone_number")
-  address      String   @db.Text
-  latitude     Float?
-  longitude    Float?
-  status       String   @default("pending") // pending, delivered
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  @@map("delivery_details")
 }

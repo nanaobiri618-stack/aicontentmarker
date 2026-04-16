@@ -151,10 +151,10 @@ export default function DashboardOverview() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Volume', value: `GHS ${data?.finance.totalRevenue.toLocaleString()}`, color: 'cyan', icon: ArrowDownRightIcon },
-          { label: 'Active Agents', value: data?.agentCount, color: 'purple', icon: PlayIcon },
-          { label: 'Pending Payout', value: `GHS ${data?.finance.pendingSettlements.toLocaleString()}`, color: 'yellow', icon: ArrowDownRightIcon },
-          { label: 'System Load', value: `${data?.systemLoad}%`, color: 'blue', icon: CheckCircleIcon },
+          { label: 'Total Volume', value: `GHS ${(data?.finance?.totalRevenue || 0).toLocaleString()}`, color: 'cyan', icon: ArrowDownRightIcon },
+          { label: 'Active Agents', value: data?.agentCount || 0, color: 'purple', icon: PlayIcon },
+          { label: 'Pending Payout', value: `GHS ${(data?.finance?.pendingSettlements || 0).toLocaleString()}`, color: 'yellow', icon: ArrowDownRightIcon },
+          { label: 'System Load', value: `${data?.systemLoad || 0}%`, color: 'blue', icon: CheckCircleIcon },
         ].map((stat, i) => (
           <motion.div
             key={i}
