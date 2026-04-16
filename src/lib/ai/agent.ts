@@ -76,9 +76,11 @@ export async function executeAgentTask(taskId: number): Promise<AgentResult> {
 
   // STEP 3: DRAFTING - Generate multi-channel content with Gemini
   try {
+    const prompt = `${systemPrompt}\n\n${userMessage}\n\nRespond ONLY with valid JSON in this exact format:\n{\n  "instagram": "full Instagram caption with emojis and hashtags",\n  "instagram_image": "description of suggested image",\n  "linkedin": "LinkedIn post text",\n  "email": "email subject and body"\n}\n\nImportant: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
+
     const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const genResult = await model.generateContent(prompt);
+    const responseText = genResult.response.text();
     const rawOutput = parseAiJSON<any>(responseText);
 
     const drafts: GeneratedDraft[] = [
