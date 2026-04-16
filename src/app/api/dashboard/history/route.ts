@@ -28,7 +28,7 @@ export async function GET() {
     const GOD_ADMIN_EMAIL = 'admingod123@gmail.com';
     const isGodAdmin = String(session.user.email).toLowerCase() === GOD_ADMIN_EMAIL;
 
-    let tasks;
+    let tasks: any[] = [];
     if (isGodAdmin) {
       tasks = await prisma.agentTask.findMany({
         include: { institution: true },
