@@ -137,6 +137,23 @@ export default function DashboardOverview() {
     }
   }
 
+  async function handleSwitchContext(institutionId: number) {
+    setBusyAction(`switch-${institutionId}`);
+    try {
+      const res = await fetch('/api/user/active-institution', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ institutionId }),
+      });
+      if (!res.ok) throw new Error('Switch failed');
+      await load(); // Full reload to refresh metrics
+    } catch (e) {
+      alert('Failed to switch business context');
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 flex items-center justify-center min-h-[60vh]">
@@ -382,10 +399,11 @@ export default function DashboardOverview() {
                             View Store
                           </a>
                           <button
-                            onClick={() => alert('Switching active institution context... (logic to be implemented)')}
-                            className="text-[10px] font-black text-vivid-purple hover:text-white transition-colors uppercase tracking-widest"
+                            onClick={() => handleSwitchContext(inst.id)}
+                            disabled={busyAction === `switch-${inst.id}`}
+                            className="text-[10px] font-black text-vivid-purple hover:text-white transition-colors uppercase tracking-widest disabled:opacity-50"
                           >
-                            Manage
+                            {busyAction === `switch-${inst.id}` ? 'SWITCHING...' : 'Manage'}
                           </button>
                         </td>
                       </tr>

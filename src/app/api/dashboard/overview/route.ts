@@ -50,6 +50,33 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // AUTO-SELECT LOGIC: If user has no active institutionId but owns exactly one business,
+    // automatically link it so they don't see an empty dashboard.
+    if (!user.institutionId && user.ownedInstitutions.length === 1) {
+      const singleOwned = user.ownedInstitutions[0];
+      console.log(`[DASHBOARD-OVERVIEW] Auto-selecting only owned institution for ${user.email}: ${singleOwned.name}`);
+      
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { institutionId: singleOwned.id },
+        include: { 
+          ownedInstitutions: true,
+          institution: {
+            include: {
+              products: true,
+              agentTasks: {
+                include: { generatedPosts: true },
+                orderBy: { createdAt: 'desc' },
+                take: 5,
+              },
+            },
+          },
+        }
+      });
+      // Use the updated user data for the rest of the request
+      Object.assign(user, updatedUser);
+    }
+
     // Fetch orders separately since they're not directly on Institution
     const orders = user.institutionId 
       ? await prisma.order.findMany({
