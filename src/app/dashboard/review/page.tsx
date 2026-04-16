@@ -153,7 +153,7 @@ export default function ReviewQueuePage() {
 
             <div className="relative">
               <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-black/20 rounded-[1.5rem] p-6 border border-slate-200 dark:border-white/5 font-medium italic">
-                "{item.content}"
+                &quot;{item.content}&quot;
               </p>
             </div>
 
