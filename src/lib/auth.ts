@@ -109,16 +109,19 @@ export const authOptions: NextAuthOptions = {
         token.institutionSlug = (user as any).institutionSlug ?? null;
       }
 
-      // Enrich JWT with role + institution slug for middleware redirects.
-      const userId = token?.sub ? parseInt(token.sub) : NaN;
-      if (!Number.isNaN(userId)) {
+      // Fix: Look up the user by email! Google OAuth IDs in token.sub will crash parseInt().
+      if (token.email) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: userId },
+          where: { email: token.email },
           include: { institution: true },
         });
 
-        token.role = dbUser?.role ?? token.role ?? 'user';
-        token.institutionSlug = dbUser?.institution?.slug ?? token.institutionSlug ?? null;
+        if (dbUser) {
+          // Re-map token.sub to our database ID instead of the Google profile ID
+          token.sub = String(dbUser.id);
+          token.role = dbUser.role;
+          token.institutionSlug = dbUser.institution?.slug ?? null;
+        }
       }
 
       return token;
