@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -139,7 +140,14 @@ export default function UserDashboardPage() {
                       
                       <div className="flex items-start gap-4">
                         {store.logo ? (
-                          <img src={store.logo} alt={store.institutionName} className="w-12 h-12 rounded-xl object-cover bg-black/40 border border-white/10" />
+                          <Image 
+                            src={store.logo} 
+                            alt={store.institutionName} 
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-xl object-cover bg-black/40 border border-white/10" 
+                            unoptimized
+                          />
                         ) : (
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyber-blue/20 to-vivid-purple/20 border border-white/10 flex items-center justify-center font-bold text-cyber-blue text-xs">
                             {store.institutionName.charAt(0)}

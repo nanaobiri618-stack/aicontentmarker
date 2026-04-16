@@ -4,7 +4,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ['@prisma/client'],
+  experimental: {
+    serverExternalPackages: ['@prisma/client'],
+  },
   webpack: (config) => {
     config.watchOptions = config.watchOptions || {};
     const ignored = config.watchOptions.ignored || [];

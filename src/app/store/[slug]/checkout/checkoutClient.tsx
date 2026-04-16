@@ -98,7 +98,7 @@ export default function CheckoutClient({
     } else if (session?.user?.name && !deliveryInfo.name) {
       setDeliveryInfo(prev => ({ ...prev, name: session.user?.name || '' }));
     }
-  }, [router, searchParams, status, storeSlug, session]);
+  }, [router, searchParams, status, storeSlug, session, deliveryInfo.name]);
 
   async function placeOrderAndPay() {
     if (!product) return;
