@@ -82,6 +82,12 @@ export default function UserDashboardPage() {
         if (!storesRes.ok) {
           setError('Failed to load marketplace content');
         }
+      } catch (e: any) {
+        console.error('User Dashboard Load Error:', e);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
