@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       status: 'pending',
       deliveryDetails: delivery ? {
         create: {
-          customerName: delivery.name,
+          recipientName: delivery.name,
           phoneNumber: delivery.phone,
           address: delivery.address,
           latitude: delivery.lat ? parseFloat(delivery.lat) : null,
