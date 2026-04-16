@@ -57,6 +57,13 @@ type DashboardData = {
   }>;
   agentCount: number;
   systemLoad: number;
+  unverifiedInstitutions?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    industry: string;
+    verificationStatus: string;
+  }>;
 };
 
 export default function DashboardOverview() {
@@ -249,6 +256,71 @@ export default function DashboardOverview() {
               )}
             </div>
           </section>
+
+          {/* God Admin: Institutional Verification Oversight */}
+          {isGodAdmin && data?.unverifiedInstitutions && data.unverifiedInstitutions.length > 0 && (
+            <section className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden">
+              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                    <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                    Institutional Verification Oversight
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">Manual onboarding overrides</p>
+                </div>
+                <div className="px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black animate-pulse">
+                  ACTION REQUIRED
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-[10px] text-slate-500 uppercase tracking-widest border-b border-white/5">
+                      <th className="px-8 py-4">Institution</th>
+                      <th className="px-8 py-4">Industry</th>
+                      <th className="px-8 py-4">Status</th>
+                      <th className="px-8 py-4 text-right">Verification Logic</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {data.unverifiedInstitutions.map((inst: any) => (
+                      <tr key={inst.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-8 py-6">
+                          <p className="font-bold text-white group-hover:text-cyber-blue transition-colors">{inst.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono mt-0.5">{inst.slug}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="text-xs text-slate-400 capitalize">{inst.industry}</span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            inst.verificationStatus === 'pending' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' : 'bg-red-500/10 border-red-500/30 text-red-500'
+                          }`}>
+                            {inst.verificationStatus.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-right space-x-4">
+                          <button
+                            onClick={() => handleAction({ type: 'verify_institution', id: inst.id, status: 'verified' })}
+                            disabled={busyAction === `verify_institution-${inst.id}`}
+                            className="text-[10px] font-black text-cyber-blue hover:text-white transition-colors uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {busyAction === `verify_institution-${inst.id}` ? 'Approving...' : 'Verify Manually'}
+                          </button>
+                          <button
+                            onClick={() => handleAction({ type: 'verify_institution', id: inst.id, status: 'rejected' })}
+                            className="text-[10px] font-black text-red-400 hover:text-white transition-colors uppercase tracking-widest"
+                          >
+                            Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Delivery & Orders Table */}
           <section className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] overflow-hidden">

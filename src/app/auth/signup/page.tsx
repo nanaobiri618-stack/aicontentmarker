@@ -34,10 +34,10 @@ export default function SignupPage() {
   }, []);
 
   const canSubmit = useMemo(() => {
+    // Signup bug fix: Users no longer need to pick a store during registration
     if (!email.trim() || password.length < 8) return false;
-    if (role === 'user' && !storeSlug) return false;
     return true;
-  }, [email, password, role, storeSlug]);
+  }, [email, password]);
 
   async function submit() {
     setBusy(true);
@@ -51,7 +51,6 @@ export default function SignupPage() {
           email,
           password,
           role,
-          storeSlug: role === 'user' ? storeSlug : null,
         }),
       });
       const json = await res.json();

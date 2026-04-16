@@ -77,6 +77,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(complaint);
     }
 
+    if (type === 'verify_institution') {
+      const institution = await prisma.institution.update({
+        where: { id },
+        data: { 
+          verificationStatus: status, // 'verified' or 'rejected'
+          verificationNote: status === 'verified' ? 'Manually verified by platform admin' : 'Rejected by platform admin'
+        }
+      });
+      return NextResponse.json(institution);
+    }
+
     return NextResponse.json({ error: 'Invalid update type' }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

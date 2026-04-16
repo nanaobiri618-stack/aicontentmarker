@@ -190,6 +190,15 @@ export async function GET() {
       }))
       .slice(0, 5);
 
+    // God Admin specific: Fetch institutions needing verification
+    let unverifiedInstitutions: any[] = [];
+    if (isGodAdmin) {
+      unverifiedInstitutions = await prisma.institution.findMany({
+        where: { verificationStatus: { not: 'verified' } },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
     return NextResponse.json({
       user: { name: user.name, email: user.email, role: user.role },
       institution: user.institution ? { name: user.institution.name, slug: user.institution.slug } : undefined,
@@ -206,6 +215,7 @@ export async function GET() {
         forwarded: c.forwarded || false,
         createdAt: c.createdAt || new Date(),
       })),
+      unverifiedInstitutions,
       agentCount: totalAgentTasks,
       systemLoad,
     });
