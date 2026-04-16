@@ -238,7 +238,7 @@ export default function UserDashboardPage() {
                           <h4 className="font-bold text-sm text-white group-hover/rec:text-cyber-blue transition-colors">{rec.name}</h4>
                           <span className="text-[10px] font-mono text-cyber-blue bg-cyber-blue/10 px-1.5 py-0.5 rounded border border-cyber-blue/20">{rec.matchScore}% Match</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-tight italic">"{rec.reason}"</p>
+                        <p className="text-[11px] text-slate-400 leading-tight italic">&quot;{rec.reason}&quot;</p>
                       </div>
                     ))
                   ) : (

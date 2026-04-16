@@ -152,7 +152,7 @@ export default function StorefrontClient({
                         {rec.matchScore}% Match
                       </span>
                     </div>
-                    <p className="text-sm text-slate-300 italic mb-4">"{rec.reason}"</p>
+                    <p className="text-sm text-slate-300 italic mb-4">&quot;{rec.reason}&quot;</p>
                     <Link
                       href={`/store/${storeSlug}/checkout?productId=${rec.productId}&qty=1`}
                       className="inline-flex items-center gap-2 text-xs font-bold text-white bg-cyber-blue/40 px-4 py-2 rounded-xl hover:bg-cyber-blue transition-colors"
