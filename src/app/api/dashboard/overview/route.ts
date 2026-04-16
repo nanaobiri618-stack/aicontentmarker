@@ -94,7 +94,7 @@ export async function GET() {
       : monthlyRevenue > 0 ? 100 : 0;
 
     // Get complaints
-    let complaints;
+    let complaints: any[];
     if (isGodAdmin) {
       complaints = await prisma.complaint.findMany({
         include: { user: true, institution: true },
@@ -126,7 +126,7 @@ export async function GET() {
     const recentTasks = user.institution?.agentTasks || [];
 
     // Get users for payment table
-    let paymentUsersQuery;
+    let paymentUsersQuery: any[];
     if (isGodAdmin) {
       paymentUsersQuery = await prisma.user.findMany({
         where: { orders: { some: {} } },
