@@ -102,6 +102,26 @@ export default function DashboardOverview() {
     }
   }
 
+  async function sendAlert(userId: number, userName: string) {
+    if (!confirm(`Send payment reminder email to ${userName}?`)) return;
+    
+    setBusyAction(`alert-${userId}`);
+    try {
+      const res = await fetch('/api/payments/send-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to send alert');
+      alert('Payment reminder email sent successfully!');
+    } catch (e: any) {
+      alert(e.message || 'Failed to send alert');
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 flex items-center justify-center min-h-[60vh]">
@@ -302,9 +322,10 @@ export default function DashboardOverview() {
                         {u.status !== 'PAID' && (
                           <button
                             onClick={() => sendAlert(u.id, u.name)}
-                            className="text-xs font-black text-red-400 hover:text-red-300 transition-colors"
+                            disabled={busyAction === `alert-${u.id}`}
+                            className="text-xs font-black text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
                           >
-                            Send Alert
+                            {busyAction === `alert-${u.id}` ? 'Sending...' : 'Send Alert'}
                           </button>
                         )}
                       </td>
@@ -388,9 +409,4 @@ export default function DashboardOverview() {
       </AnimatePresence>
     </div>
   );
-}
-
-// Mocked helper for alerts (original file had this)
-async function sendAlert(userId: number, userName: string) {
-  // Logic already defined in the main component but kept for reference if needed elsewhere
 }
