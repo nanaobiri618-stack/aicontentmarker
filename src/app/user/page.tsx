@@ -62,18 +62,26 @@ export default function UserDashboardPage() {
           fetch('/api/user/recommendations', { cache: 'no-store' }),
         ]);
 
-        const ordersJson = await ordersRes.json();
-        const storesJson = await storesRes.json();
-        const recsJson = await recsRes.json();
+        if (!ordersRes.ok) console.error('Orders API failed:', await ordersRes.text());
+        if (!storesRes.ok) console.error('Stores API failed:', await storesRes.text());
+        if (!recsRes.ok) console.error('Recommendations API failed:', await recsRes.text());
+
+        let ordersJson = { orders: [] };
+        let storesJson = { stores: [] };
+        let recsJson = { recommendations: [] };
+
+        try { if (ordersRes.ok) ordersJson = await ordersRes.json(); } catch (e) { console.error('Error parsing orders:', e); }
+        try { if (storesRes.ok) storesJson = await storesRes.json(); } catch (e) { console.error('Error parsing stores:', e); }
+        try { if (recsRes.ok) recsJson = await recsRes.json(); } catch (e) { console.error('Error parsing recommendations:', e); }
 
         setOrders(ordersJson.orders ?? []);
         setStores(storesJson.stores ?? []);
         setRecommendations(recsJson.recommendations ?? []);
-      } catch (e: any) {
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
+
+        // Only show fatal error if STORES (the main content) completely fails
+        if (!storesRes.ok) {
+          setError('Failed to load marketplace content');
+        }
     };
     loadData();
   }, []);

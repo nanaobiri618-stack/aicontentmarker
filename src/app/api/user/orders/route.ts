@@ -11,7 +11,9 @@ export async function GET() {
 
   const userId = parseInt(String((session.user as any).id));
   const role = (session.user as any).role as string | undefined;
-  if (role !== 'user') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  
+  // Allow any logged-in user to see their own history
+  if (!role) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const orders = await prisma.order.findMany({
     where: { userId },
