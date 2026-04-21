@@ -35,6 +35,7 @@ model Institution {
   socialHandles      SocialHandle[]
   users              User[]
   complaints         Complaint[]
+  aiModels           AIModel[]
 
   @@map("institutions")
 }
@@ -219,4 +220,19 @@ model GeneratedSite {
   institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@map("generated_sites")
+}
+
+model AIModel {
+  id            Int         @id @default(autoincrement())
+  institutionId Int         @map("institution_id")
+  provider      String      // 'gemini', 'openai', 'anthropic', etc.
+  modelName     String      @map("model_name") // 'gemini-1.5-flash', 'gpt-4', etc.
+  apiKey        String      @map("api_key") @db.Text
+  isDefault     Boolean     @default(false) @map("is_default")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@index([institutionId], map: "ai_models_institution_id_fkey")
+  @@map("ai_models")
 }

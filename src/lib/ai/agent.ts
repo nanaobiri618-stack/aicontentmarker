@@ -3,15 +3,13 @@ import { prisma } from '@/lib/db';
 import { parseAiJSON } from './utils';
 import { buildSystemPrompt, buildUserMessage } from './prompts';
 import { validateContent } from './validation';
+import { getInstitutionAIModel } from './getAIConfig';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 let genAI: GoogleGenerativeAI | null = null;
-function getGemini(): GoogleGenerativeAI {
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not defined in environment variables');
-  }
-  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+function getGemini(apiKey: string): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(apiKey);
   return genAI;
 }
 
@@ -74,11 +72,14 @@ export async function executeAgentTask(taskId: number): Promise<AgentResult> {
     data: { status: 'drafting' },
   });
 
-  // STEP 3: DRAFTING - Generate multi-channel content with Gemini
+  // Get institution's AI model configuration
+  const aiConfig = await getInstitutionAIModel(institution.id);
+
+  // STEP 3: DRAFTING - Generate multi-channel content with AI
   try {
     const prompt = `${systemPrompt}\n\n${userMessage}\n\nRespond ONLY with valid JSON in this exact format:\n{\n  "instagram": "full Instagram caption with emojis and hashtags",\n  "instagram_image": "description of suggested image",\n  "linkedin": "LinkedIn post text",\n  "email": "email subject and body"\n}\n\nImportant: Return ONLY the JSON object, no markdown, no backticks, no explanation.`;
 
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = getGemini(aiConfig.apiKey).getGenerativeModel({ model: aiConfig.modelName });
     const genResult = await model.generateContent(prompt);
     const responseText = genResult.response.text();
     const rawOutput = parseAiJSON<any>(responseText);

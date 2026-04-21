@@ -1,20 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/db';
 import { parseAiJSON } from '../utils';
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+import { getInstitutionAIModel } from '../getAIConfig';
 
 let genAI: GoogleGenerativeAI | null = null;
-function getGemini(): GoogleGenerativeAI {
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not defined in environment variables');
-  }
-  if (!genAI) genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+function getGemini(apiKey: string): GoogleGenerativeAI {
+  if (!genAI) genAI = new GoogleGenerativeAI(apiKey);
   return genAI;
-}
-
-function isGeminiConfigured() {
-  return !!GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza');
 }
 
 export async function runAdAgent(institutionId: number): Promise<{ postsCreated: number }> {
@@ -33,13 +25,8 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
     data: { institutionId, taskType: 'ad_generation', status: 'drafting' },
   });
 
-  if (!isGeminiConfigured()) {
-    await prisma.agentTask.update({
-      where: { id: task.id },
-      data: { status: 'completed' },
-    });
-    return { postsCreated: 0 };
-  }
+  // Get institution's AI model configuration
+  const aiConfig = await getInstitutionAIModel(institutionId);
 
   const productList = institution.products
     .map((p) => `- ${p.name} (GHS ${p.price}) — ${p.description ?? ''}`)
@@ -74,7 +61,7 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
   Important: Return ONLY the raw JSON object. No backticks, no explanation.`;
 
   try {
-    const model = getGemini().getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = getGemini(aiConfig.apiKey).getGenerativeModel({ model: aiConfig.modelName });
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     const ads = parseAiJSON<any>(responseText);
@@ -103,7 +90,7 @@ export async function runAdAgent(institutionId: number): Promise<{ postsCreated:
 
     return { postsCreated: count };
   } catch (error: any) {
-    console.error('Gemini API error:', error);
+    console.error('AI API error:', error);
     await prisma.agentTask.update({
       where: { id: task.id },
       data: { status: 'failed' },

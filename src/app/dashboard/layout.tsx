@@ -11,8 +11,8 @@ import {
   ChatBubbleLeftRightIcon,
   Cog8ToothIcon,
   CreditCardIcon,
-  ArrowLeftOnRectangleIcon,
   SparklesIcon,
+  ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -26,6 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Squares2X2Icon },
     { name: 'Institutions', href: '/dashboard/institutions', icon: BuildingOffice2Icon },
+    { name: 'AI Agents', href: '/dashboard/agents', icon: SparklesIcon },
     { name: 'Queue', href: '/dashboard/review', icon: ChatBubbleLeftRightIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'History', href: '/dashboard/history', icon: ClockIcon },
