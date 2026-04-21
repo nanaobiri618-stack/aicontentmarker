@@ -174,16 +174,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Overlay for mobile when menu is open */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/50 dark:bg-black/50 backdrop-blur-sm z-40"
           onClick={closeMobileMenu}
         />
       )}
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative pt-14 lg:pt-0">
-        {/* Ambient background glows */}
-        <div className="pointer-events-none absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-purple-600/20 blur-[120px] rounded-full" />
-        <div className="pointer-events-none absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/10 blur-[100px] rounded-full" />
+        {/* Ambient background glows - only visible in dark mode */}
+        <div className="dark:block hidden pointer-events-none absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-purple-600/20 blur-[120px] rounded-full" />
+        <div className="dark:block hidden pointer-events-none absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/10 blur-[100px] rounded-full" />
         <div className="relative z-10 p-4 lg:p-8">
           {children}
         </div>
