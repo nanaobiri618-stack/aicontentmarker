@@ -121,7 +121,7 @@ export default function AIAgentsPage() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="mb-6">
-        <Link href="/dashboard" className="text-cyan-400 hover:text-cyan-300 text-sm">
+        <Link href="/dashboard" className="text-cyan-500 dark:text-cyan-400 hover:text-cyan-600 dark:hover:text-cyan-300 text-sm">
           ← Back to Dashboard
         </Link>
       </div>
@@ -134,8 +134,8 @@ export default function AIAgentsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">AI Agents</h1>
-            <p className="text-slate-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">AI Agents</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
               Manage your AI models and API keys for content generation
             </p>
           </div>
@@ -149,30 +149,30 @@ export default function AIAgentsPage() {
         </div>
 
         {/* How it works */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 space-y-3">
-          <h3 className="text-lg font-semibold text-white">How AI Agents Work</h3>
+        <div className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">How AI Agents Work</h3>
           <div className="grid gap-3 text-sm">
             <div className="flex items-start gap-3">
-              <span className="text-cyan-400 font-bold">1.</span>
-              <p className="text-slate-300">
+              <span className="text-cyan-600 dark:text-cyan-400 font-bold">1.</span>
+              <p className="text-slate-700 dark:text-slate-300">
                 Add your AI provider API key (Gemini, OpenAI, etc.)
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-cyan-400 font-bold">2.</span>
-              <p className="text-slate-300">
-                Select the model name (e.g., <code className="text-slate-400">gemini-1.5-flash</code>, <code className="text-slate-400">gpt-4</code>)
+              <span className="text-cyan-600 dark:text-cyan-400 font-bold">2.</span>
+              <p className="text-slate-700 dark:text-slate-300">
+                Select the model name (e.g., <code className="text-slate-500 dark:text-slate-400">gemini-1.5-flash</code>, <code className="text-slate-500 dark:text-slate-400">gpt-4</code>)
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-cyan-400 font-bold">3.</span>
-              <p className="text-slate-300">
+              <span className="text-cyan-600 dark:text-cyan-400 font-bold">3.</span>
+              <p className="text-slate-700 dark:text-slate-300">
                 Set one model as default for your AI agents
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-cyan-400 font-bold">4.</span>
-              <p className="text-slate-300">
+              <span className="text-cyan-600 dark:text-cyan-400 font-bold">4.</span>
+              <p className="text-slate-700 dark:text-slate-300">
                 Your agents will use your API key for content generation
               </p>
             </div>
@@ -183,8 +183,8 @@ export default function AIAgentsPage() {
         {message && (
           <div className={`rounded-lg p-4 text-sm ${
             message.type === 'success'
-              ? 'bg-green-500/10 text-green-400 border border-green-500/30'
-              : 'bg-red-500/10 text-red-400 border border-red-500/30'
+              ? 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-500/30'
+              : 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/30'
           }`}>
             {message.text}
           </div>
@@ -192,16 +192,16 @@ export default function AIAgentsPage() {
 
         {/* Add Model Form */}
         {showAddForm && (
-          <form onSubmit={handleAddModel} className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Add New AI Model</h3>
+          <form onSubmit={handleAddModel} className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Add New AI Model</h3>
             
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Provider</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Provider</label>
                 <select
                   value={newModel.provider}
                   onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
                 >
                   <option value="gemini">Gemini (Google)</option>
                   <option value="openai">OpenAI</option>
@@ -211,27 +211,27 @@ export default function AIAgentsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Model Name</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Model Name</label>
                 <input
                   type="text"
                   value={newModel.modelName}
                   onChange={(e) => setNewModel({ ...newModel, modelName: e.target.value })}
                   placeholder="gemini-1.5-flash"
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">API Key</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">API Key</label>
               <input
                 type="password"
                 value={newModel.apiKey}
                 onChange={(e) => setNewModel({ ...newModel, apiKey: e.target.value })}
                 placeholder="sk-..."
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Your API key is stored securely and never exposed to the client.
               </p>
             </div>
@@ -242,9 +242,9 @@ export default function AIAgentsPage() {
                 id="isDefault"
                 checked={newModel.isDefault}
                 onChange={(e) => setNewModel({ ...newModel, isDefault: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-cyan-500 focus:ring-cyan-500"
               />
-              <label htmlFor="isDefault" className="text-sm text-slate-300">
+              <label htmlFor="isDefault" className="text-sm text-slate-700 dark:text-slate-300">
                 Set as default model
               </label>
             </div>
@@ -260,7 +260,7 @@ export default function AIAgentsPage() {
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                className="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -270,13 +270,13 @@ export default function AIAgentsPage() {
 
         {/* Models List */}
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white">Your AI Models</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Your AI Models</h3>
           
           {models.length === 0 ? (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center">
-              <ServerIcon className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">No AI models configured yet</p>
-              <p className="text-sm text-slate-500 mt-1">Add your first AI model to get started</p>
+            <div className="bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+              <ServerIcon className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-600 dark:text-slate-400">No AI models configured yet</p>
+              <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Add your first AI model to get started</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -285,22 +285,22 @@ export default function AIAgentsPage() {
                   key={model.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`bg-slate-800/50 border rounded-xl p-4 ${
-                    model.isDefault ? 'border-cyan-500/50 bg-cyan-500/5' : 'border-slate-700'
+                  className={`bg-slate-100 dark:bg-slate-800/50 border rounded-xl p-4 ${
+                    model.isDefault ? 'border-cyan-500 dark:border-cyan-500/50 bg-cyan-50 dark:bg-cyan-500/5' : 'border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-white">{model.modelName}</h4>
+                        <h4 className="font-semibold text-slate-900 dark:text-white">{model.modelName}</h4>
                         {model.isDefault && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs rounded-full">
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 text-xs rounded-full">
                             <StarIcon className="w-3 h-3" />
                             Default
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-slate-400">
+                      <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                         <span className="flex items-center gap-1">
                           <SparklesIcon className="w-4 h-4" />
                           {model.provider}
@@ -316,7 +316,7 @@ export default function AIAgentsPage() {
                       {!model.isDefault && (
                         <button
                           onClick={() => handleSetDefault(model.id)}
-                          className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-700 rounded-lg transition-colors"
+                          className="p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           title="Set as default"
                         >
                           <StarIcon className="w-5 h-5" />
@@ -324,7 +324,7 @@ export default function AIAgentsPage() {
                       )}
                       <button
                         onClick={() => handleDelete(model.id)}
-                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         title="Remove model"
                       >
                         <TrashIcon className="w-5 h-5" />
@@ -338,38 +338,38 @@ export default function AIAgentsPage() {
         </div>
 
         {/* API Key Help */}
-        <div className="bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/30 rounded-xl p-5">
-          <h3 className="text-lg font-semibold text-white mb-3">Where to get API Keys</h3>
+        <div className="bg-gradient-to-r from-purple-100 dark:from-purple-500/10 to-cyan-100 dark:to-cyan-500/10 border border-purple-300 dark:border-purple-500/30 rounded-xl p-5">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Where to get API Keys</h3>
           <div className="space-y-2 text-sm">
             <div className="flex items-start gap-3">
-              <span className="text-purple-400 font-bold">Gemini:</span>
+              <span className="text-purple-600 dark:text-purple-400 font-bold">Gemini:</span>
               <a
                 href="https://makersuite.google.com/app/apikey"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan-400 hover:text-cyan-300 underline"
+                className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 underline"
               >
                 Get API Key →
               </a>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-purple-400 font-bold">OpenAI:</span>
+              <span className="text-purple-600 dark:text-purple-400 font-bold">OpenAI:</span>
               <a
                 href="https://platform.openai.com/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan-400 hover:text-cyan-300 underline"
+                className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 underline"
               >
                 Get API Key →
               </a>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-purple-400 font-bold">Anthropic:</span>
+              <span className="text-purple-600 dark:text-purple-400 font-bold">Anthropic:</span>
               <a
                 href="https://console.anthropic.com/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan-400 hover:text-cyan-300 underline"
+                className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 underline"
               >
                 Get API Key →
               </a>
