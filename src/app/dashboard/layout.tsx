@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { 
-  Squares2X2Icon, 
+import {
+  Squares2X2Icon,
   BuildingOffice2Icon,
-  UsersIcon, 
-  ClockIcon, 
-  ChatBubbleLeftRightIcon, 
+  UsersIcon,
+  ClockIcon,
+  ChatBubbleLeftRightIcon,
   Cog8ToothIcon,
+  CreditCardIcon,
   ArrowLeftOnRectangleIcon,
   SparklesIcon,
   Bars3Icon,
@@ -28,6 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: 'Queue', href: '/dashboard/review', icon: ChatBubbleLeftRightIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'History', href: '/dashboard/history', icon: ClockIcon },
+    { name: 'Payment Settings', href: '/dashboard/payment-settings', icon: CreditCardIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: Cog8ToothIcon },
   ];
 
