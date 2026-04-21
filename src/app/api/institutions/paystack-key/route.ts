@@ -21,7 +21,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    hasPaystackKey: !!institution.paystackApiKey,
+    hasPaystackKey: !!(institution as any).paystackApiKey,
     institutionId: institution.id,
     institutionName: institution.name,
   });
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.institution.update({
       where: { id: user.institutionId },
-      data: { paystackApiKey },
+      data: { paystackApiKey } as any,
     });
 
     return NextResponse.json({
@@ -92,7 +92,7 @@ export async function DELETE() {
 
     await prisma.institution.update({
       where: { id: user.institutionId },
-      data: { paystackApiKey: null },
+      data: { paystackApiKey: null } as any,
     });
 
     return NextResponse.json({ success: true, message: 'Paystack API key removed' });
