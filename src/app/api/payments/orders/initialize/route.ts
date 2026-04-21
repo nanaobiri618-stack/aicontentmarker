@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
     const sessionUserId = parseInt(String((session.user as any).id));
     if (order.userId !== sessionUserId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    // Get the institution's Paystack API key (owner's key)
+    const ownerPaystackKey = order.product.institution.paystackApiKey;
+
     const payment = await initializeOrderPayment({
       email: order.user.email!,
       amountGhs: Number(order.totalPrice),
@@ -36,6 +39,7 @@ export async function POST(req: NextRequest) {
         product_id: order.productId,
         institution_id: order.product.institutionId,
       },
+      ownerPaystackKey,
     });
 
     await prisma.order.update({

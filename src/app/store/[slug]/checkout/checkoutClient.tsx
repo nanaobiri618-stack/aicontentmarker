@@ -44,6 +44,14 @@ export default function CheckoutClient({
     return product.price * quantity;
   }, [product, quantity]);
 
+  const platformFee = useMemo(() => {
+    return Math.round(total * 7) / 100; // 7% platform fee
+  }, [total]);
+
+  const grandTotal = useMemo(() => {
+    return total + platformFee;
+  }, [total, platformFee]);
+
   async function detectLocation() {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
@@ -239,9 +247,19 @@ export default function CheckoutClient({
                 />
               </div>
 
-              <div className="flex items-center justify-between border-t border-white/10 pt-4">
-                <div className="text-sm text-slate-300">Total</div>
-                <div className="text-lg font-bold text-cyber-blue">GHS {total.toFixed(2)}</div>
+              <div className="space-y-2 border-t border-white/10 pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-slate-300">Subtotal</div>
+                  <div className="text-sm text-slate-200">GHS {total.toFixed(2)}</div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-slate-400">Platform Fee (7%)</div>
+                  <div className="text-sm text-slate-400">GHS {platformFee.toFixed(2)}</div>
+                </div>
+                <div className="flex items-center justify-between border-t border-white/10 pt-2">
+                  <div className="text-sm font-semibold text-slate-200">Total</div>
+                  <div className="text-lg font-bold text-cyber-blue">GHS {grandTotal.toFixed(2)}</div>
+                </div>
               </div>
 
               <button

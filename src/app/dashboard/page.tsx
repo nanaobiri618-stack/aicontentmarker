@@ -191,11 +191,16 @@ export default function DashboardOverview() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-           {isGodAdmin && (
-             <div className="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold uppercase tracking-widest">
-               God Mode Active
-             </div>
-           )}
+           {(data?.user?.role === 'owner' || data?.user?.role === 'admin') && (
+            <>
+              <a href="/dashboard/pending-institutions" className="px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-400 hover:bg-yellow-500/30 transition-colors">
+                Pending Review
+              </a>
+              <a href="/dashboard/payment-settings" className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/50 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-colors">
+                Payment Settings
+              </a>
+            </>
+          )}
            <UserCircleIcon className="w-12 h-12 text-slate-700" />
         </div>
       </header>

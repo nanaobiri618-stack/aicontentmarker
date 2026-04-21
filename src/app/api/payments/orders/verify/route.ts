@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const sessionUserId = parseInt(String((session.user as any).id));
     if (order.userId !== sessionUserId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const data = await verifyTransaction(reference);
+    const data = await verifyTransaction(reference, order.product.institution.paystackApiKey);
 
     if (data.status === 'success') {
       await prisma.order.update({

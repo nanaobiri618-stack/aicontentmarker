@@ -19,6 +19,7 @@ model Institution {
   verificationStatus String          @default("pending") @map("verification_status")
   verificationNote   String?         @map("verification_note") @db.Text
   subscription_tier  String          @default("free")
+  paystackApiKey     String?         @map("paystack_api_key") @db.Text
   colorPrimary       String?         @default("#00D4FF") @map("color_primary")
   colorSecondary     String?         @default("#B026FF") @map("color_secondary")
   createdAt          DateTime        @default(now()) @map("created_at")
