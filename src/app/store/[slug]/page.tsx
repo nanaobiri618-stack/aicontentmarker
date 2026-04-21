@@ -3,26 +3,20 @@ import StorefrontClient from './storefrontClient';
 import { notFound } from 'next/navigation';
 
 export default async function StorefrontPage({ params }: { params: { slug: string } }) {
-  const site = await prisma.generatedSite.findUnique({
+  const institution = await prisma.institution.findUnique({
     where: { slug: params.slug },
     include: {
-      institution: {
-        include: {
-          products: { where: { isVisible: true }, orderBy: { createdAt: 'desc' } },
-          socialHandles: true,
-          brandGuides: true,
-        },
-      },
+      products: { where: { isVisible: true }, orderBy: { createdAt: 'desc' } },
+      socialHandles: true,
+      brandGuides: true,
     },
   });
 
-  if (!site) return notFound();
-
-  const institution = site.institution;
+  if (!institution) return notFound();
 
   return (
     <StorefrontClient
-      storeSlug={site.slug}
+      storeSlug={institution.slug}
       institution={{
         id: institution.id,
         name: institution.name,
